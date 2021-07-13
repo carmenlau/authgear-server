@@ -3,14 +3,14 @@ package graphql
 import (
 	"net/url"
 
-	"github.com/authgear/graphql-go-relay"
+	relay "github.com/authgear/graphql-go-relay"
 	"github.com/graphql-go/graphql"
 	"sigs.k8s.io/yaml"
 
 	"github.com/authgear/authgear-server/pkg/api/apierrors"
 	"github.com/authgear/authgear-server/pkg/lib/config/configsource"
+	"github.com/authgear/authgear-server/pkg/portal/appresource"
 	"github.com/authgear/authgear-server/pkg/portal/model"
-	"github.com/authgear/authgear-server/pkg/portal/util/resources"
 	"github.com/authgear/authgear-server/pkg/util/graphqlutil"
 )
 
@@ -201,7 +201,7 @@ func deleteDomainUpdatePublicOrigin(ctx *Context, app *model.App, deletedDomain 
 		return err
 	}
 
-	err = ctx.AppService.UpdateResources(app, []resources.Update{{
+	err = ctx.AppService.UpdateResources(app, []appresource.Update{{
 		Path: configsource.AuthgearYAML,
 		Data: data,
 	}})
