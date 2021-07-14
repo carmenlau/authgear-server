@@ -193,7 +193,8 @@ func newGraphQLHandler(p *deps.RequestProvider) http.Handler {
 	}
 	appBaseResources := deps.ProvideAppBaseResources(rootProvider)
 	managerFactory := &factory.ManagerFactory{
-		AppBaseResources: appBaseResources,
+		AppBaseResources:   appBaseResources,
+		SecretKeyAllowlist: secretKeyAllowlist,
 	}
 	appService := &service.AppService{
 		Logger:             appServiceLogger,
