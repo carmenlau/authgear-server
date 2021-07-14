@@ -88,7 +88,7 @@ func (d CSSDescriptor) ViewResources(resources []resource.ResourceFile, rawView 
 	}
 }
 
-func (d CSSDescriptor) UpdateResource(resrc *resource.ResourceFile, data []byte, _ resource.View) (*resource.ResourceFile, error) {
+func (d CSSDescriptor) UpdateResource(ctx resource.Context, resrc *resource.ResourceFile, data []byte, _ resource.View) (*resource.ResourceFile, error) {
 	return &resource.ResourceFile{
 		Location: resrc.Location,
 		Data:     data,

@@ -86,7 +86,7 @@ func (d AuthgearYAMLDescriptor) ViewResources(resources []resource.ResourceFile,
 	}
 }
 
-func (d AuthgearYAMLDescriptor) UpdateResource(resrc *resource.ResourceFile, data []byte, _ resource.View) (*resource.ResourceFile, error) {
+func (d AuthgearYAMLDescriptor) UpdateResource(ctx resource.Context, resrc *resource.ResourceFile, data []byte, _ resource.View) (*resource.ResourceFile, error) {
 	if data == nil {
 		return nil, fmt.Errorf("cannot delete '%v'", AuthgearYAML)
 	}
@@ -205,7 +205,7 @@ func (d AuthgearSecretYAMLDescriptor) viewEffectiveResource(resources []resource
 	return secretConfig, nil
 }
 
-func (d AuthgearSecretYAMLDescriptor) UpdateResource(resrc *resource.ResourceFile, data []byte, rawView resource.View) (*resource.ResourceFile, error) {
+func (d AuthgearSecretYAMLDescriptor) UpdateResource(ctx resource.Context, resrc *resource.ResourceFile, data []byte, rawView resource.View) (*resource.ResourceFile, error) {
 	if data == nil {
 		return nil, fmt.Errorf("cannot delete '%v'", AuthgearSecretYAML)
 	}

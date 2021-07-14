@@ -175,7 +175,7 @@ func (m *Manager) applyUpdates(appFs resource.Fs, updates []Update) (*resource.M
 			return nil, nil, err
 		}
 
-		resrc, err = desc.UpdateResource(resrc, u.Data, resource.AppFile{
+		resrc, err = desc.UpdateResource(struct{}{}, resrc, u.Data, resource.AppFile{
 			Path:              u.Path,
 			AllowedSecretKeys: m.SecretKeyAllowlist,
 		})
