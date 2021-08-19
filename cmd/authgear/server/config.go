@@ -36,6 +36,9 @@ type Config struct {
 	// CustomResourceDirectory sets the directory for customized resource files
 	CustomResourceDirectory string `envconfig:"CUSTOM_RESOURCE_DIRECTORY"`
 
+	// OpentelemetryEndpoint sets the OpenTelemetry endpoint
+	OpentelemetryEndpoint string `envconfig:"OPENTELEMETRY_ENDPOINT"`
+
 	*config.EnvironmentConfig
 }
 

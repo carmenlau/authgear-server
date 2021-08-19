@@ -8,6 +8,7 @@ import (
 	"github.com/authgear/authgear-server/pkg/auth"
 	"github.com/authgear/authgear-server/pkg/lib/deps"
 	"github.com/authgear/authgear-server/pkg/lib/infra/task"
+	"github.com/authgear/authgear-server/pkg/lib/instrument"
 	"github.com/authgear/authgear-server/pkg/resolver"
 	"github.com/authgear/authgear-server/pkg/util/log"
 	"github.com/authgear/authgear-server/pkg/util/server"
@@ -27,6 +28,11 @@ func (c *Controller) Start() {
 	cfg, err := LoadConfigFromEnv()
 	if err != nil {
 		golog.Fatalf("failed to load server config: %s", err)
+	}
+
+	if cfg.OpentelemetryEndpoint != "" {
+		shutdown := instrument.InitProvider(cfg.OpentelemetryEndpoint)
+		defer shutdown()
 	}
 
 	var wrk *worker.Worker
