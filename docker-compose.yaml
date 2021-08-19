@@ -38,10 +38,54 @@ services:
     - "8000:8000"
     - "8010:8010"
 
+  otel-collector:
+    image: otel/opentelemetry-collector:0.33.0
+    volumes:
+    - ./opentelemetry/otel-collector-config.yaml:/etc/otel/config.yaml
+    ports:
+    - "1888:1888"   # pprof extension
+    - "8888:8888"   # Prometheus metrics exposed by the collector
+    - "8889:8889"   # Prometheus exporter metrics
+    - "13133:13133" # health_check extension
+    - "4317:4317"   # OTLP gRPC receiver
+    - "55670:55679" # zpages extension
+    depends_on:
+    - zipkin
+
+  prometheus:
+    image: prom/prometheus:v2.29.1
+    volumes:
+    - prometheus_data:/var/prometheus
+    - ./opentelemetry/prometheus.yaml:/etc/prometheus/prometheus.yml
+    command:
+    - '--config.file=/etc/prometheus/prometheus.yml'
+    - '--storage.tsdb.path=/var/prometheus'
+    - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+    - '--web.console.templates=/usr/share/prometheus/consoles'
+    - '--storage.tsdb.retention.time=30d'
+    ports:
+    - "9090:9090"
+
+  zipkin:
+    image: openzipkin/zipkin:2.23
+    ports:
+    - "9411:9411"
+
+  grafana:
+    image: grafana/grafana:8.1.1
+    volumes:
+    - grafana_data:/var/lib/grafana
+    ports:
+     - "5000:3000"
+
 volumes:
   redis_data:
     driver: local
   db_data:
     driver: local
   elasticsearch_data:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
     driver: local
