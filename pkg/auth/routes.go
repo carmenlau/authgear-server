@@ -88,6 +88,7 @@ func NewRouter(p *deps.RootProvider, configSource *configsource.ConfigSource) *h
 	)
 	webappPageChain := httproute.Chain(
 		webappChain,
+		p.Middleware(newPageViewMiddleware),
 		p.Middleware(newCSRFMiddleware),
 		webapp.TurbolinksMiddleware{},
 		p.Middleware(newSecHeadersMiddleware),
