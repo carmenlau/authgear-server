@@ -405,6 +405,13 @@ func newWebAppErrorHandler(p *deps.RequestProvider) http.Handler {
 	))
 }
 
+func newWebForbiddenHandler(p *deps.RequestProvider) http.Handler {
+	panic(wire.Build(
+		DependencySet,
+		wire.Bind(new(http.Handler), new(*handlerwebapp.ForbiddenHandler)),
+	))
+}
+
 func newWebAppWebsocketHandler(p *deps.RequestProvider) http.Handler {
 	panic(wire.Build(
 		DependencySet,

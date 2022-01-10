@@ -1,0 +1,12 @@
+{{ template "__page_frame.html" . }}
+
+{{ define "page-content" }}
+<div class="pane twc-container-vertical padding-t-32 padding-b-20 padding-h-24 tablet:padding-h-32 desktop:padding-h-32">
+
+<p class="text-sm break-words primary-txt margin-0 text-center">{{ template "error-forbidden-message" }}</p>
+
+{{ template "__watermark.html" . }}
+
+</div>
+
+{{ end }}

@@ -63,6 +63,7 @@
   "error-blocked-user": "Your account is blocked from login.",
   "error-network": "Your device is offline. Please check your network connection first.",
   "error-server": "Server encountered an internal error.",
+  "error-forbidden-message": "The page that you are trying to visit is not allowed",
 
   "success-resend-code": "Resent code successfully!",
 
