@@ -1,6 +1,7 @@
 import React, { useCallback, useContext } from "react";
 import { Context, FormattedMessage } from "@oursky/react-messageformat";
-import { TextField } from "@fluentui/react";
+import { TextField, Toggle } from "@fluentui/react";
+import cn from "classnames";
 import produce from "immer";
 import { clearEmptyObject } from "../../util/misc";
 import { parseIntegerAllowLeadingZeros } from "../../util/input";
@@ -21,11 +22,15 @@ import FormContainer from "../../FormContainer";
 import styles from "./PasswordConfigurationScreen.module.scss";
 
 interface FormState {
+  primaryAuthenticatorEnabled: boolean;
   codeExpirySeconds: number | undefined;
 }
 
 function constructFormState(config: PortalAPIAppConfig): FormState {
   return {
+    primaryAuthenticatorEnabled:
+      config.authentication?.primary_authenticators?.includes("password") ??
+      false,
     codeExpirySeconds: config.forgot_password?.reset_code_expiry_seconds,
   };
 }
@@ -36,8 +41,29 @@ function constructConfig(
   currentState: FormState
 ): PortalAPIAppConfig {
   return produce(config, (config) => {
-    config.forgot_password = config.forgot_password ?? {};
+    if (
+      initialState.primaryAuthenticatorEnabled !==
+      currentState.primaryAuthenticatorEnabled
+    ) {
+      config.authentication ??= {};
+      config.authentication.primary_authenticators ??= [];
+
+      if (config.authentication.primary_authenticators.includes("password")) {
+        if (!currentState.primaryAuthenticatorEnabled) {
+          config.authentication.primary_authenticators =
+            config.authentication.primary_authenticators.filter(
+              (p) => p !== "password"
+            );
+        }
+      } else {
+        if (currentState.primaryAuthenticatorEnabled) {
+          config.authentication.primary_authenticators.push("password");
+        }
+      }
+    }
+
     if (initialState.codeExpirySeconds !== currentState.codeExpirySeconds) {
+      config.forgot_password = config.forgot_password ?? {};
       config.forgot_password.reset_code_expiry_seconds =
         currentState.codeExpirySeconds;
     }
@@ -54,6 +80,19 @@ const PasswordConfigurationScreenContent: React.FC<PasswordConfigurationScreenCo
     const { state, setState } = props.form;
 
     const { renderToString } = useContext(Context);
+
+    const onPrimaryAuthenticatorEnabledChange = useCallback(
+      (_, checked?: boolean) => {
+        if (checked == null) {
+          return;
+        }
+        setState((state) => ({
+          ...state,
+          primaryAuthenticatorEnabled: checked,
+        }));
+      },
+      [setState]
+    );
 
     const onCodeExpirySecondsChange = useCallback(
       (_, value?: string) => {
@@ -74,6 +113,20 @@ const PasswordConfigurationScreenContent: React.FC<PasswordConfigurationScreenCo
           <FormattedMessage id="PasswordConfigurationScreen.description" />
         </ScreenDescription>
         <Widget className={styles.widget}>
+          <Toggle
+            checked={state.primaryAuthenticatorEnabled}
+            inlineLabel={true}
+            label={
+              <FormattedMessage id="PasswordConfigurationScreen.primary-authenticator-enabled.label" />
+            }
+            onChange={onPrimaryAuthenticatorEnabledChange}
+          />
+        </Widget>
+        <Widget
+          className={cn(styles.widget, {
+            [styles.readOnly]: !state.primaryAuthenticatorEnabled,
+          })}
+        >
           <WidgetTitle>
             <FormattedMessage id="PasswordConfigurationScreen.code-settings" />
           </WidgetTitle>
@@ -86,6 +139,18 @@ const PasswordConfigurationScreenContent: React.FC<PasswordConfigurationScreenCo
             onChange={onCodeExpirySecondsChange}
           />
         </Widget>
+        <ScreenDescription
+          className={cn(styles.widget, {
+            [styles.readOnly]: !state.primaryAuthenticatorEnabled,
+          })}
+        >
+          <FormattedMessage
+            id="PasswordConfigurationScreen.password-policy.description"
+            values={{
+              passwordPolicyPath: "../../password-policy",
+            }}
+          />
+        </ScreenDescription>
       </ScreenContent>
     );
   };

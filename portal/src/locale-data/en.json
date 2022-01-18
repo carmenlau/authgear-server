@@ -454,7 +454,9 @@
   "PasswordConfigurationScreen.title": "Password",
   "PasswordConfigurationScreen.description": "Let your users to authenticate themselves using passwords.",
   "PasswordConfigurationScreen.code-settings": "Password Reset Code",
+  "PasswordConfigurationScreen.primary-authenticator-enabled.label": "Use Password as primary authenticator",
   "PasswordConfigurationScreen.reset-code-valid-duration.label": "Reset code valid duration (seconds)",
+  "PasswordConfigurationScreen.password-policy.description": "Change the password requirements in {ReactRouterLink, react, to{{passwordPolicyPath}} children{Password Policy}}",
 
   "ApplicationsConfigurationScreen.title": "Applications",
   "ApplicationsConfigurationScreen.client-endpoint.desc": "Configure applications to be used at the endpoint: {ExternalLink, react, href{{clientEndpoint}} children{{clientEndpoint}}}.\nYou can change this endpoint at the {ReactRouterLink, react, to{{dnsUrl}} children{Custom Domains configuration}} with your custom domains.",
