@@ -18,7 +18,7 @@ import ScreenDescription from "../../ScreenDescription";
 import WidgetTitle from "../../WidgetTitle";
 import Widget from "../../Widget";
 import FormContainer from "../../FormContainer";
-import styles from "./ForgotPasswordConfigurationScreen.module.scss";
+import styles from "./PasswordConfigurationScreen.module.scss";
 
 interface FormState {
   codeExpirySeconds: number | undefined;
@@ -45,12 +45,12 @@ function constructConfig(
   });
 }
 
-interface ForgotPasswordConfigurationScreenContentProps {
+interface PasswordConfigurationScreenContentProps {
   form: AppConfigFormModel<FormState>;
 }
 
-const ForgotPasswordConfigurationScreenContent: React.FC<ForgotPasswordConfigurationScreenContentProps> =
-  function ForgotPasswordConfigurationScreenContent(props) {
+const PasswordConfigurationScreenContent: React.FC<PasswordConfigurationScreenContentProps> =
+  function PasswordConfigurationScreenContent(props) {
     const { state, setState } = props.form;
 
     const { renderToString } = useContext(Context);
@@ -68,19 +68,19 @@ const ForgotPasswordConfigurationScreenContent: React.FC<ForgotPasswordConfigura
     return (
       <ScreenContent>
         <ScreenTitle className={styles.widget}>
-          <FormattedMessage id="ForgotPasswordConfigurationScreen.title" />
+          <FormattedMessage id="PasswordConfigurationScreen.title" />
         </ScreenTitle>
         <ScreenDescription className={styles.widget}>
-          <FormattedMessage id="ForgotPasswordConfigurationScreen.description" />
+          <FormattedMessage id="PasswordConfigurationScreen.description" />
         </ScreenDescription>
         <Widget className={styles.widget}>
           <WidgetTitle>
-            <FormattedMessage id="ForgotPasswordConfigurationScreen.code-settings" />
+            <FormattedMessage id="PasswordConfigurationScreen.code-settings" />
           </WidgetTitle>
           <TextField
             type="text"
             label={renderToString(
-              "ForgotPasswordConfigurationScreen.reset-code-valid-duration.label"
+              "PasswordConfigurationScreen.reset-code-valid-duration.label"
             )}
             value={state.codeExpirySeconds?.toFixed(0) ?? ""}
             onChange={onCodeExpirySecondsChange}
@@ -90,8 +90,8 @@ const ForgotPasswordConfigurationScreenContent: React.FC<ForgotPasswordConfigura
     );
   };
 
-const ForgotPasswordConfigurationScreenScreen: React.FC =
-  function ForgotPasswordConfigurationScreenScreen() {
+const PasswordConfigurationScreenScreen: React.FC =
+  function PasswordConfigurationScreenScreen() {
     const { appID } = useParams();
     const form = useAppConfigForm(appID, constructFormState, constructConfig);
 
@@ -105,9 +105,9 @@ const ForgotPasswordConfigurationScreenScreen: React.FC =
 
     return (
       <FormContainer form={form}>
-        <ForgotPasswordConfigurationScreenContent form={form} />
+        <PasswordConfigurationScreenContent form={form} />
       </FormContainer>
     );
   };
 
-export default ForgotPasswordConfigurationScreenScreen;
+export default PasswordConfigurationScreenScreen;

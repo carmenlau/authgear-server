@@ -65,6 +65,10 @@ const ScreenNav: React.FC = function ScreenNav() {
             url: "configuration/authentication/login-id",
           },
           {
+            textKey: "ScreenNav.password",
+            url: "configuration/authentication/password",
+          },
+          {
             textKey: "ScreenNav.authenticators",
             url: "configuration/authentication/authenticators",
           },
@@ -132,10 +136,6 @@ const ScreenNav: React.FC = function ScreenNav() {
         textKey: "ScreenNav.advanced",
         url: "advanced",
         children: [
-          {
-            textKey: "ScreenNav.password-reset-code",
-            url: "advanced/password-reset-code",
-          },
           {
             textKey: "ScreenNav.webhooks",
             url: "advanced/webhooks",
