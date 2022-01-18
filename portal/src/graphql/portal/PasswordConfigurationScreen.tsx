@@ -155,8 +155,8 @@ const PasswordConfigurationScreenContent: React.FC<PasswordConfigurationScreenCo
     );
   };
 
-const PasswordConfigurationScreenScreen: React.FC =
-  function PasswordConfigurationScreenScreen() {
+const PasswordConfigurationScreen: React.FC =
+  function PasswordConfigurationScreen() {
     const { appID } = useParams();
     const form = useAppConfigForm(appID, constructFormState, constructConfig);
 
@@ -175,4 +175,4 @@ const PasswordConfigurationScreenScreen: React.FC =
     );
   };
 
-export default PasswordConfigurationScreenScreen;
+export default PasswordConfigurationScreen;
