@@ -42,6 +42,7 @@ import StandardAttributesConfigurationScreen from "./graphql/portal/StandardAttr
 import CustomAttributesConfigurationScreen from "./graphql/portal/CustomAttributesConfigurationScreen";
 import EditCustomAttributeScreen from "./graphql/portal/EditCustomAttributeScreen";
 import CreateCustomAttributeScreen from "./graphql/portal/CreateCustomAttributeScreen";
+import PasswordlessConfigurationScreen from "./graphql/portal/PasswordlessConfigurationScreen";
 
 const AppRoot: React.FC = function AppRoot() {
   const { appID } = useParams();
@@ -103,6 +104,10 @@ const AppRoot: React.FC = function AppRoot() {
           <Route
             path="/configuration/authentication/password"
             element={<PasswordConfigurationScreen />}
+          />
+          <Route
+            path="/configuration/authentication/passwordless"
+            element={<PasswordlessConfigurationScreen />}
           />
           <Route
             path="/configuration/authentication/authenticators"

@@ -99,6 +99,7 @@
   "ScreenNav.single-sign-on": "Single Sign-On",
   "ScreenNav.client-applications": "Applications",
   "ScreenNav.password": "Password",
+  "ScreenNav.passwordless": "Passwordless",
   "ScreenNav.password-policy": "Password Policy",
   "ScreenNav.ui-settings": "UI Settings",
   "ScreenNav.localization": "Localization",
@@ -457,6 +458,14 @@
   "PasswordConfigurationScreen.primary-authenticator-enabled.label": "Use Password as primary authenticator",
   "PasswordConfigurationScreen.reset-code-valid-duration.label": "Reset code valid duration (seconds)",
   "PasswordConfigurationScreen.password-policy.description": "Change the password requirements in {ReactRouterLink, react, to{{passwordPolicyPath}} children{Password Policy}}",
+
+  "PasswordlessConfigurationScreen.title": "Passwordless",
+  "PasswordlessConfigurationScreen.description": "Let your users to login without passwords.",
+  "PasswordlessConfigurationScreen.authenticators": "Authenticators",
+  "PasswordlessConfigurationScreen.oob-otp-email-enabled.label": "Passwordless via Email",
+  "PasswordlessConfigurationScreen.oob-otp-sms-enabled.label": "Passwordless via SMS",
+  "PasswordlessConfigurationScreen.priority": "Priority",
+  "PasswordlessConfigurationScreen.passwordless-first.label": "Use passwordless login first, if the users have password configured",
 
   "ApplicationsConfigurationScreen.title": "Applications",
   "ApplicationsConfigurationScreen.client-endpoint.desc": "Configure applications to be used at the endpoint: {ExternalLink, react, href{{clientEndpoint}} children{{clientEndpoint}}}.\nYou can change this endpoint at the {ReactRouterLink, react, to{{dnsUrl}} children{Custom Domains configuration}} with your custom domains.",

@@ -69,6 +69,10 @@ const ScreenNav: React.FC = function ScreenNav() {
             url: "configuration/authentication/password",
           },
           {
+            textKey: "ScreenNav.passwordless",
+            url: "configuration/authentication/passwordless",
+          },
+          {
             textKey: "ScreenNav.authenticators",
             url: "configuration/authentication/authenticators",
           },
