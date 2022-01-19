@@ -109,7 +109,16 @@ enum AuditLogActivityType {
   USER_CREATED
 
   """"""
+  USER_DELETED
+
+  """"""
+  USER_DISABLED
+
+  """"""
   USER_PROFILE_UPDATED
+
+  """"""
+  USER_REENABLED
 
   """"""
   USER_SIGNED_OUT
