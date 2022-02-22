@@ -242,7 +242,7 @@ func TestTranslationResource(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(data, ShouldEqual, compact(`{
 				"a": { "LanguageTag": "zh", "Value": "en a in fs A" },
-				"b": { "LanguageTag": "zh", "Value": "en b in fs A" },
+				"b": { "LanguageTag": "zh", "Value": "en b in fs C" },
 				"c": { "LanguageTag": "zh", "Value": "zh c in fs C" }
 			}`))
 		})
@@ -271,6 +271,37 @@ func TestTranslationResource(t *testing.T) {
 				"a": { "LanguageTag": "zh", "Value": "zh a in fs A" },
 				"b": { "LanguageTag": "zh", "Value": "zh b in fs C" },
 				"c": { "LanguageTag": "zh", "Value": "en c in fs A" }
+			}`))
+		})
+
+		Convey("it should allow override default language by providing translation in custom level fs", func() {
+			writeFile(fsA, "en", `{
+				"a": "en a in fs A",
+				"b": "en b in fs A",
+				"c": "en c in fs A",
+				"d": "en d in fs A"
+			}`)
+			writeFile(fsA, "zh", `{
+				"a": "zh a in fs A",
+				"b": "zh b in fs A"
+			}`)
+			writeFile(fsB, "en", `{
+				"c": "en c in fs B"
+			}`)
+			writeFile(fsC, "zh", `{
+				"b": "zh b in fs C"
+			}`)
+
+			data, err := read(resource.EffectiveResource{
+				DefaultTag:    "zh",
+				SupportedTags: []string{"zh"},
+			})
+			So(err, ShouldBeNil)
+			So(data, ShouldEqual, compact(`{
+				"a": { "LanguageTag": "zh", "Value": "zh a in fs A" },
+				"b": { "LanguageTag": "zh", "Value": "zh b in fs C" },
+				"c": { "LanguageTag": "zh", "Value": "en c in fs B" },
+				"d": { "LanguageTag": "zh", "Value": "en d in fs A" }
 			}`))
 		})
 
