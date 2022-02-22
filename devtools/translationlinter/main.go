@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -21,8 +22,15 @@ func (e errKeys) Error() string {
 	if len(e.MissingKeysByLang) > 0 {
 		fmt.Fprintf(&buf, "The following languages have missing keys:\n")
 
-		for lang, keys := range e.MissingKeysByLang {
+		langs := []string{}
+		for lang := range e.MissingKeysByLang {
+			langs = append(langs, lang)
+		}
+		sort.Strings(langs)
+		for _, lang := range langs {
 			fmt.Fprintf(&buf, "  %v:\n", lang)
+			keys := e.MissingKeysByLang[lang]
+			sort.Strings(keys)
 			for _, key := range keys {
 				fmt.Fprintf(&buf, "    %v\n", key)
 			}
@@ -32,8 +40,15 @@ func (e errKeys) Error() string {
 	if len(e.ExtraKeysByLang) > 0 {
 		fmt.Fprintf(&buf, "The following languages have extra keys:\n")
 
-		for lang, keys := range e.ExtraKeysByLang {
+		langs := []string{}
+		for lang := range e.ExtraKeysByLang {
+			langs = append(langs, lang)
+		}
+		sort.Strings(langs)
+		for _, lang := range langs {
 			fmt.Fprintf(&buf, "  %v:\n", lang)
+			keys := e.ExtraKeysByLang[lang]
+			sort.Strings(keys)
 			for _, key := range keys {
 				fmt.Fprintf(&buf, "    %v\n", key)
 			}
