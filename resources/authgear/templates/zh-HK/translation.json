@@ -1,10 +1,6 @@
 {
-  "app.name": "Authgear",
-
-  "email.default.sender": "no-reply@authgear.com",
   "email.default.reply-to": "",
   "email.default.subject": "",
-  "sms.default.sender": "Authgear",
 
   "email.welcome-message.subject": "歡迎！",
   "email.forgot-password.subject": "[{AppName}] 重設密碼指示",

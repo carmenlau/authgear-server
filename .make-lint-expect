@@ -1,3 +1,14 @@
+The following languages have missing keys:
+  zh-HK:
+    app.name
+    email.default.sender
+    sms.default.sender
+  zh-TW:
+    app.name
+    email.default.sender
+    sms.default.sender
+
+exit status 1
 pkg/api/apierrors/error.go cannot import github.com/authgear/authgear-server/pkg/util/validation
 pkg/api/apierrors/error_test.go cannot import github.com/authgear/authgear-server/pkg/util/errorutil
 pkg/api/apierrors/tags.go cannot import github.com/authgear/authgear-server/pkg/util/errorutil

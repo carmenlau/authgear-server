@@ -246,6 +246,34 @@ func TestTranslationResource(t *testing.T) {
 				"c": { "LanguageTag": "zh", "Value": "zh c in fs C" }
 			}`))
 		})
+
+		Convey("it should use default language if it is not provided in built language", func() {
+			writeFile(fsA, "en", `{
+				"a": "en a in fs A",
+				"b": "en b in fs A",
+				"c": "en c in fs A"
+			}`)
+			writeFile(fsA, "zh", `{
+				"a": "zh a in fs A",
+				"b": "zh b in fs A"
+			}`)
+			writeFile(fsC, "zh", `{
+				"b": "zh b in fs C"
+			}`)
+
+			data, err := read(resource.EffectiveResource{
+				DefaultTag:    "zh",
+				PreferredTags: []string{"zh"},
+				SupportedTags: []string{"zh"},
+			})
+			So(err, ShouldBeNil)
+			So(data, ShouldEqual, compact(`{
+				"a": { "LanguageTag": "zh", "Value": "zh a in fs A" },
+				"b": { "LanguageTag": "zh", "Value": "zh b in fs C" },
+				"c": { "LanguageTag": "zh", "Value": "en c in fs A" }
+			}`))
+		})
+
 	})
 
 	Convey("TranslationJSON EffectiveFile", t, func() {

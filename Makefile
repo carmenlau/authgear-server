@@ -41,7 +41,8 @@ test:
 lint:
 	golangci-lint run ./cmd/... ./pkg/...
 	go run ./devtools/translationlinter
-	-go run ./devtools/importlinter api api >.make-lint-expect 2>&1
+	-go run ./devtools/translationlinter > .make-lint-expect 2>&1
+	-go run ./devtools/importlinter api api >> .make-lint-expect 2>&1
 	-go run ./devtools/importlinter lib api util >> .make-lint-expect 2>&1
 	-go run ./devtools/importlinter admin api lib util >> .make-lint-expect 2>&1
 	-go run ./devtools/importlinter auth api lib util >> .make-lint-expect 2>&1
