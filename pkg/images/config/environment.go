@@ -21,5 +21,7 @@ type EnvironmentConfig struct {
 	// CustomResourceDirectory sets the directory for customized resource files
 	CustomResourceDirectory string `envconfig:"CUSTOM_RESOURCE_DIRECTORY"`
 	// Database configures the configsource database
-	Database *config.DatabaseEnvironmentConfig `envconfig:"DATABASE"`
+	GlobalDatabase *config.GlobalDatabaseCredentialsEnvironmentConfig `envconfig:"DATABASE"`
+	// Database configures the configsource database
+	DatabaseConfig *config.DatabaseEnvironmentConfig `envconfig:"DATABASE_CONFIG"`
 }

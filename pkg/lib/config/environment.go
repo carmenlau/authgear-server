@@ -21,10 +21,12 @@ type EnvironmentConfig struct {
 	StaticAssetURLPrefix StaticAssetURLPrefix `envconfig:"STATIC_ASSET_URL_PREFIX" default:"/static"`
 	// SentryDSN sets the sentry DSN.
 	SentryDSN SentryDSN `envconfig:"SENTRY_DSN"`
-	// Database configures the backend database
-	Database DatabaseEnvironmentConfig `envconfig:"DATABASE"`
+	// Database configures the global database
+	GlobalDatabase GlobalDatabaseCredentialsEnvironmentConfig `envconfig:"DATABASE"`
 	// AuditDatabase configures the audit database
-	AuditDatabase DatabaseCredentialsEnvironmentConfig `envconfig:"AUDIT_DATABASE"`
+	AuditDatabase AuditDatabaseCredentialsEnvironmentConfig `envconfig:"AUDIT_DATABASE"`
+
+	DatabaseConfig DatabaseEnvironmentConfig `envconfig:"DATABASE_CONFIG"`
 
 	ImagesCDNHost ImagesCDNHost `envconfig:"IMAGES_CDN_HOST"`
 }
