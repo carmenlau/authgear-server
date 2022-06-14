@@ -48,6 +48,7 @@ import (
 	"github.com/authgear/authgear-server/pkg/lib/session/idpsession"
 	"github.com/authgear/authgear-server/pkg/lib/translation"
 	"github.com/authgear/authgear-server/pkg/lib/tutorial"
+	"github.com/authgear/authgear-server/pkg/lib/usage"
 	"github.com/authgear/authgear-server/pkg/lib/web"
 	"github.com/authgear/authgear-server/pkg/util/template"
 )
@@ -315,4 +316,10 @@ var CommonDependencySet = wire.NewSet(
 	presign.DependencySet,
 
 	tutorial.DependencySet,
+
+	wire.NewSet(
+		usage.DependencySet,
+		wire.Bind(new(forgotpassword.HardSMSBucketer), new(*usage.HardSMSBucketer)),
+		wire.Bind(new(otp.HardSMSBucketer), new(*usage.HardSMSBucketer)),
+	),
 )
