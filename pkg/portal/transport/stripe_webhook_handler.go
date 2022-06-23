@@ -2,10 +2,12 @@ package transport
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
+	"github.com/authgear/authgear-server/pkg/lib/infra/db/globaldb"
 	"github.com/authgear/authgear-server/pkg/portal/libstripe"
+	"github.com/authgear/authgear-server/pkg/portal/model"
+	"github.com/authgear/authgear-server/pkg/portal/service"
 	"github.com/authgear/authgear-server/pkg/util/httproute"
 	"github.com/authgear/authgear-server/pkg/util/log"
 )
@@ -22,15 +24,18 @@ func NewStripeWebhookLogger(lf *log.Factory) StripeWebhookLogger {
 
 type StripeService interface {
 	ConstructEvent(r *http.Request) (libstripe.Event, error)
+	CreateSubscriptionIfNotExists(stripeCheckoutSessionID string) error
 }
 
 type SubscriptionService interface {
+	UpdateSubscriptionCheckoutStatus(stripCheckoutSessionID string, appID string, status model.SubscriptionCheckoutStatus, customerID *string) error
 }
 
 type StripeWebhookHandler struct {
 	StripeService StripeService
 	Logger        StripeWebhookLogger
 	Subscriptions SubscriptionService
+	Database      *globaldb.Handle
 }
 
 func (h *StripeWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +69,36 @@ func (h *StripeWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *StripeWebhookHandler) handleCheckoutSessionCompletedEvent(event *libstripe.CheckoutSessionCompletedEvent) error {
-	fmt.Println("handleCheckoutSessionCompletedEvent", event)
+	// Update _portal_subscription_checkout set state=completed, stripe_customer_id
+	err := h.Database.WithTx(func() error {
+		return h.Subscriptions.UpdateSubscriptionCheckoutStatus(
+			event.StripeCheckoutSessionID,
+			event.AppID,
+			model.SubscriptionCheckoutStatusCompleted,
+			&event.StripeCustomerID,
+		)
+	})
+	if err != nil {
+		if errors.Is(err, service.ErrSubscriptionCheckoutNotFound) {
+			// The checkout is not found or the checkout is already subscribed
+			// Tolerate it.
+			return nil
+		}
+		return err
+	}
+
+	// Check and create stripe subscription
+	err = h.Database.WithTx(func() error {
+		h.StripeService.CreateSubscriptionIfNotExists(event.StripeCheckoutSessionID)
+		if err != nil {
+			if errors.Is(err, libstripe.ErrCustomerAlreadySubscribed) {
+				// The customer has subscriptions already
+				// Tolerate it
+				return nil
+			}
+			return err
+		}
+		return nil
+	})
 	return nil
 }
