@@ -13,6 +13,7 @@ import { useViewerQuery } from "./graphql/portal/query/viewerQuery";
 
 import styles from "./ScreenHeader.module.css";
 import { useSystemConfig } from "./context/SystemConfigContext";
+import { resetMixpanel } from "./GTMProvider";
 
 interface ScreenHeaderAppSectionProps {
   appID: string;
@@ -70,6 +71,8 @@ const ScreenHeader: React.FC = function ScreenHeader() {
   const redirectURI = window.location.origin + "/";
 
   const onClickLogout = useCallback(() => {
+    // reset the mixpanel for new distinct id when logout
+    resetMixpanel();
     authgear
       .logout({
         redirectURI,

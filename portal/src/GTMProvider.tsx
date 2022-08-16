@@ -101,6 +101,18 @@ export function useGTMDispatch(): (event: AuthgearGTMEvent) => void {
   }
 }
 
+// When logout is triggered, the user will be redirected immediately
+// There is not enough time to wait until GTM triggers the custom HTML script
+// Calling mixpanel.reset directly instead of calling via GTM
+export function resetMixpanel(): void {
+  /* global mixpanel */
+  try {
+    // call mixpanel only when it is initialized
+    // @ts-expect-error
+    mixpanel.reset();
+  } catch {}
+}
+
 export interface GTMProviderProps {
   containerID?: string;
   children: React.ReactNode;
