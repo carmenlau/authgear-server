@@ -28,9 +28,14 @@ import Authenticated from "./graphql/portal/Authenticated";
 import { LoadingContextProvider } from "./hook/loading";
 import ShowLoading from "./ShowLoading";
 import GTMProvider, {
+  AuthgearGTMEvent,
   AuthgearGTMEventType,
+  useAuthgearGTMEvent,
   useAuthgearGTMEventDataAttributes,
+  useGTMDispatch,
 } from "./GTMProvider";
+import { useViewerQuery } from "./graphql/portal/query/viewerQuery";
+import { extractRawID } from "./util/graphql";
 
 const AppsScreen = lazy(async () => import("./graphql/portal/AppsScreen"));
 const CreateProjectScreen = lazy(
@@ -205,6 +210,35 @@ const defaultComponents = {
   DocLink,
 };
 
+export interface LoadCurrentUserProps {
+  children?: React.ReactNode;
+}
+
+const LoadCurrentUser: React.FC<LoadCurrentUserProps> =
+  function LoadCurrentUser({ children }: LoadCurrentUserProps) {
+    const { viewer } = useViewerQuery();
+
+    const gtmEvent = useAuthgearGTMEvent({
+      event: AuthgearGTMEventType.Identified,
+    });
+    const sendDataToGTM = useGTMDispatch();
+    useEffect(() => {
+      if (viewer) {
+        const event: AuthgearGTMEvent = {
+          ...gtmEvent,
+          event_data: {
+            // fixme: userid encoded twice
+            user_id: extractRawID(extractRawID(viewer.id)),
+            email: viewer.email ?? undefined,
+          },
+        };
+        sendDataToGTM(event);
+      }
+    }, [viewer, gtmEvent, sendDataToGTM]);
+
+    return <>{children}</>;
+  };
+
 // ReactApp is responsible for fetching runtime config and initialize authgear SDK.
 const ReactApp: React.FC = function ReactApp() {
   const [systemConfig, setSystemConfig] = useState<SystemConfig | null>(null);
@@ -254,7 +288,9 @@ const ReactApp: React.FC = function ReactApp() {
           <HelmetProvider>
             <ApolloProvider client={client}>
               <SystemConfigContext.Provider value={systemConfig}>
-                <PortalRoot />
+                <LoadCurrentUser>
+                  <PortalRoot />
+                </LoadCurrentUser>
               </SystemConfigContext.Provider>
             </ApolloProvider>
           </HelmetProvider>

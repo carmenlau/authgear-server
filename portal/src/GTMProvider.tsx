@@ -24,6 +24,7 @@ export enum AuthgearGTMEventType {
   ClickedDocLink = "ag.event.clickedDocLink",
   ClickedNextInProjectWizard = "ag.event.clickedNextInProjectWizard",
   ClickedSkipInProjectWizard = "ag.event.clickedSkipInProjectWizard",
+  Identified = "ag.lifecycle.identified",
 }
 
 interface AuthgearGTMEventParams {

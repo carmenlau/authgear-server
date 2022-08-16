@@ -15,6 +15,11 @@ This document describes how to setup portal tracking to send data to Mixpanel vi
       - Event name: `ag.event.*`
       - Use regex matching: true
       - Fires on: All Custom Events
+    - `ag.lifecycle.identified`
+      - Type: Custom Event
+      - Event name: `ag.lifecycle.identified`
+      - Use regex matching: true
+      - Fires on: All Custom Events
   - Built-In Variables
     - Select all
   - User-Defined Variables
@@ -65,3 +70,16 @@ This document describes how to setup portal tracking to send data to Mixpanel vi
         </script>
         ```
       - Trigger: `ag.event.*`
+    - `Mixpanel Identify`
+      - Type: Custom HTML
+      - HTML:
+        ```html
+        <script type="text/javascript">
+          var eventData = {{event_data}};
+          mixpanel.identify(eventData.user_id);
+          if (eventData.email) {
+            mixpanel.people.set({ "email": eventData.email });
+          }
+        </script>
+        ```
+      - Trigger: `ag.lifecycle.identified`
