@@ -240,9 +240,14 @@ const LoadCurrentUser: React.FC<LoadCurrentUserProps> =
             email: viewer.email ?? undefined,
           },
         };
+        console.log("viewer", event);
         sendDataToGTM(event);
       }
     }, [viewer, gtmEvent, sendDataToGTM]);
+
+    if (!viewer) {
+      return <ShowLoading />;
+    }
 
     return <>{children}</>;
   };

@@ -91,7 +91,14 @@ export function useMakeAuthgearGTMEventDataAttributes(): (
 
 export function useGTMDispatch(): (event: AuthgearGTMEvent) => void {
   try {
-    return useReactHookGTMDispatch();
+    // return useReactHookGTMDispatch();
+    return (event: AuthgearGTMEvent) => {
+      console.log("useGTMDispatch", window["dataLayer"]);
+      if (window["dataLayer"]) {
+        window["dataLayer"].push(event);
+      }
+      console.log("useGTMDispatch:2", window["dataLayer"]);
+    };
   } catch {
     // if container id is not configured, return no-op function
     return () => {};
@@ -108,11 +115,11 @@ const GTMProvider: React.FC<GTMProviderProps> = ({ containerID, children }) => {
     return { id: containerID ?? "" };
   }, [containerID]);
 
-  if (containerID) {
-    return (
-      <ReactHookGTMProvider state={state}>{children}</ReactHookGTMProvider>
-    );
-  }
+  // if (containerID) {
+  //   return (
+  //     <ReactHookGTMProvider state={state}>{children}</ReactHookGTMProvider>
+  //   );
+  // }
   return <>{children}</>;
 };
 
