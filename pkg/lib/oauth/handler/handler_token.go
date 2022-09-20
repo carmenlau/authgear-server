@@ -615,9 +615,10 @@ func (h *TokenHandler) handleBiometricAuthenticate(
 		return nil, errors.New("id token issuer is not provided")
 	}
 	idToken, err := h.IDTokenIssuer.IssueIDToken(oidc.IssueIDTokenOptions{
-		ClientID:           client.ClientID,
+		Client:             client,
 		SID:                oidc.EncodeSID(offlineGrant),
 		AuthenticationInfo: offlineGrant.GetAuthenticationInfo(),
+		Scopes:             scopes,
 	})
 	if err != nil {
 		return nil, err
@@ -645,9 +646,14 @@ func (h *TokenHandler) handleIDToken(
 		return nil, protocol.NewErrorStatusCode("invalid_request", "valid session is required", http.StatusUnauthorized)
 	}
 	idToken, err := h.IDTokenIssuer.IssueIDToken(oidc.IssueIDTokenOptions{
-		ClientID:           client.ClientID,
+		Client:             client,
 		SID:                oidc.EncodeSID(s),
 		AuthenticationInfo: s.GetAuthenticationInfo(),
+		// scopes are used for specifying which fields should be included in the ID token
+		// those fields may include personal identifiable information
+		// Since the ID token issued here will be used in id_token_hint
+		// so no scopes are needed
+		Scopes: []string{},
 	})
 	if err != nil {
 		return nil, err
@@ -763,10 +769,11 @@ func (h *TokenHandler) issueTokensForAuthorizationCode(
 			return nil, protocol.NewError("invalid_request", "cannot issue ID token")
 		}
 		idToken, err := h.IDTokenIssuer.IssueIDToken(oidc.IssueIDTokenOptions{
-			ClientID:           client.ClientID,
+			Client:             client,
 			SID:                sid,
 			Nonce:              code.OIDCNonce,
 			AuthenticationInfo: info,
+			Scopes:             code.Scopes,
 		})
 		if err != nil {
 			return nil, err
@@ -797,9 +804,10 @@ func (h *TokenHandler) issueTokensForRefreshToken(
 			return nil, errors.New("id token issuer is not provided")
 		}
 		idToken, err := h.IDTokenIssuer.IssueIDToken(oidc.IssueIDTokenOptions{
-			ClientID:           client.ClientID,
+			Client:             client,
 			SID:                oidc.EncodeSID(offlineGrant),
 			AuthenticationInfo: offlineGrant.GetAuthenticationInfo(),
+			Scopes:             authz.Scopes,
 		})
 		if err != nil {
 			return nil, err
