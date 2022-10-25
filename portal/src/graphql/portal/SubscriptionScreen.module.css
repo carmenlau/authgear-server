@@ -35,10 +35,21 @@
 
 .processingPaymentSection {
   display: flex;
+  flex-direction: column;
   padding: 20px;
   max-width: 560px;
+  row-gap: 10px;
 }
 
 .processingPaymentSpinner{
   padding: 24px 0;
+}
+
+.processingPaymentErrorMessage {
+  padding: 24px 0;
+  color: #a4262c;
+}
+
+.processingPaymentButtonContainer {
+  text-align: right;
 }
