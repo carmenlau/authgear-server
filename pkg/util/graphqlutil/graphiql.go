@@ -65,8 +65,7 @@ var graphiqlTemplate = htmltemplate.Must(htmltemplate.New("graphiql").Parse(`<!D
 		// Derive a fetch URL from the current URL, sans the GraphQL parameters.
 		var graphqlParamNames = {
 			query: true,
-			variables: true,
-			operationName: true
+			variables: true
 		};
 		var otherParams = {};
 		for (var k in parameters) {
@@ -105,23 +104,20 @@ var graphiqlTemplate = htmltemplate.Must(htmltemplate.New("graphiql").Parse(`<!D
 			parameters.variables = newVariables;
 			updateURL();
 		}
-		function onEditOperationName(newOperationName) {
-			parameters.operationName = newOperationName;
-			updateURL();
-		}
 		function updateURL() {
 			history.replaceState(null, null, locationQuery(parameters));
 		}
 		ReactDOM.render(
+			// When operationName is provided during initialization
+			// It won't update even user changes it in the UI
+			// So operationName is removed from the query parameters
 			React.createElement(GraphiQL, {
 				fetcher: graphQLFetcher,
 				onEditQuery: onEditQuery,
 				onEditVariables: onEditVariables,
-				onEditOperationName: onEditOperationName,
 				query: {{ .QueryString }},
 				response: {{ .ResultString }},
-				variables: {{ .VariablesString }},
-				operationName: {{ .OperationName }},
+				variables: {{ .VariablesString }}
 			}),
 			document.getElementById("root"),
 		);
@@ -153,7 +149,6 @@ func (g *GraphiQL) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Schema:         *g.Schema,
 		RequestString:  opts.Query,
 		VariableValues: opts.Variables,
-		OperationName:  opts.OperationName,
 		Context:        g.Context,
 	}
 
@@ -186,7 +181,6 @@ func (g *GraphiQL) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		QueryString:     params.RequestString,
 		ResultString:    resString,
 		VariablesString: varsString,
-		OperationName:   params.OperationName,
 	}
 
 	err = graphiqlTemplate.Execute(w, d)
