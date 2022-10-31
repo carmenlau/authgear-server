@@ -30,20 +30,6 @@ type GraphQLHandler struct {
 }
 
 func (h *GraphQLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		graphiql := &graphqlutil.GraphiQL{
-			Title: "GraphiQL: Portal - Authgear",
-		}
-		graphiql.ServeHTTP(w, r)
-		return
-	} else {
-		// graphql-go/handler will use "query=" when it is present.
-		// This causes GraphiQL unable to fetch the schema.
-		q := r.URL.Query()
-		q.Del("query")
-		r.URL.RawQuery = q.Encode()
-	}
-
 	invoke := func(f func() error) error {
 		return f()
 	}
@@ -53,6 +39,17 @@ func (h *GraphQLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := invoke(func() error {
 		return h.Database.WithTx(func() error {
+			ctx := graphql.WithContext(r.Context(), h.GraphQLContext)
+			if r.Method == "GET" {
+				graphiql := &graphqlutil.GraphiQL{
+					Title:   "GraphiQL: Portal - Authgear",
+					Schema:  graphql.Schema,
+					Context: ctx,
+				}
+				graphiql.ServeHTTP(w, r)
+				return errRollback
+			}
+
 			doRollback := false
 			graphqlHandler := graphqlgohandler.New(&graphqlgohandler.Config{
 				Schema:   graphql.Schema,
@@ -64,8 +61,6 @@ func (h *GraphQLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					}
 				},
 			})
-
-			ctx := graphql.WithContext(r.Context(), h.GraphQLContext)
 			graphqlHandler.ContextHandler(ctx, w, r)
 
 			if doRollback {
