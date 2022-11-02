@@ -813,6 +813,7 @@ func newOAuthAuthorizeHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	authenticateURLProvider := &webapp2.AuthenticateURLProvider{
@@ -1591,6 +1592,7 @@ func newOAuthConsentHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	authenticateURLProvider := &webapp2.AuthenticateURLProvider{
@@ -7133,6 +7135,7 @@ func newWebAppLoginHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -7914,6 +7917,7 @@ func newWebAppSignupHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -8694,6 +8698,7 @@ func newWebAppPromoteHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -9457,6 +9462,7 @@ func newWebAppSelectAccountHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -10218,6 +10224,7 @@ func newWebAppSSOCallbackHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -10969,6 +10976,7 @@ func newWechatAuthHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -11723,6 +11731,7 @@ func newWechatCallbackHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -12480,6 +12489,7 @@ func newWebAppEnterLoginIDHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -13239,6 +13249,7 @@ func newWebAppEnterPasswordHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -13996,6 +14007,7 @@ func newWebAppUsePasskeyHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -14753,6 +14765,7 @@ func newWebAppCreatePasswordHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -15511,6 +15524,7 @@ func newWebAppCreatePasskeyHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -16268,6 +16282,7 @@ func newWebAppPromptCreatePasskeyHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -17025,6 +17040,7 @@ func newWebAppSetupTOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -17784,6 +17800,7 @@ func newWebAppEnterTOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -18541,6 +18558,7 @@ func newWebAppSetupOOBOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -19298,6 +19316,7 @@ func newWebAppEnterOOBOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -20057,6 +20076,7 @@ func newWebAppSetupWhatsappOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -20814,6 +20834,7 @@ func newWebAppWhatsappOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -22000,6 +22021,7 @@ func newWebAppEnterRecoveryCodeHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -22757,6 +22779,7 @@ func newWebAppSetupRecoveryCodeHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -23510,6 +23533,7 @@ func newWebAppVerifyIdentityHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -24265,6 +24289,7 @@ func newWebAppVerifyIdentitySuccessHandler(p *deps.RequestProvider) http.Handler
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -25018,6 +25043,7 @@ func newWebAppForgotPasswordHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -25781,6 +25807,7 @@ func newWebAppForgotPasswordSuccessHandler(p *deps.RequestProvider) http.Handler
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -26534,6 +26561,7 @@ func newWebAppResetPasswordHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -27288,6 +27316,7 @@ func newWebAppResetPasswordSuccessHandler(p *deps.RequestProvider) http.Handler 
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -28041,6 +28070,7 @@ func newWebAppSettingsHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -28825,6 +28855,7 @@ func newWebAppSettingsProfileHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -29589,6 +29620,7 @@ func newWebAppSettingsProfileEditHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -30366,6 +30398,7 @@ func newWebAppSettingsIdentityHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -31127,6 +31160,7 @@ func newWebAppSettingsBiometricHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -31881,6 +31915,7 @@ func newWebAppSettingsMFAHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -32643,6 +32678,7 @@ func newWebAppSettingsTOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -33397,6 +33433,7 @@ func newWebAppSettingsPasskeyHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -34151,6 +34188,7 @@ func newWebAppSettingsOOBOTPHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -34905,6 +34943,7 @@ func newWebAppSettingsRecoveryCodeHandler(p *deps.RequestProvider) http.Handler 
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -35660,6 +35699,7 @@ func newWebAppSettingsSessionsHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -36425,6 +36465,7 @@ func newWebAppForceChangePasswordHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -37179,6 +37220,7 @@ func newWebAppSettingsChangePasswordHandler(p *deps.RequestProvider) http.Handle
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -37933,6 +37975,7 @@ func newWebAppForceChangeSecondaryPasswordHandler(p *deps.RequestProvider) http.
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -38687,6 +38730,7 @@ func newWebAppSettingsChangeSecondaryPasswordHandler(p *deps.RequestProvider) ht
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -39441,6 +39485,7 @@ func newWebAppSettingsDeleteAccountHandler(p *deps.RequestProvider) http.Handler
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -40202,6 +40247,7 @@ func newWebAppSettingsDeleteAccountSuccessHandler(p *deps.RequestProvider) http.
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -40957,6 +41003,7 @@ func newWebAppAccountStatusHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -41710,6 +41757,7 @@ func newWebAppLogoutHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -42482,6 +42530,7 @@ func newWebAppReturnHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -43235,6 +43284,7 @@ func newWebAppErrorHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -43988,6 +44038,7 @@ func newWebAppNotFoundHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -44758,6 +44809,7 @@ func newWebAppPasskeyCreationOptionsHandler(p *deps.RequestProvider) http.Handle
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
@@ -45478,6 +45530,7 @@ func newWebAppPasskeyRequestOptionsHandler(p *deps.RequestProvider) http.Handler
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	jsonResponseWriterLogger := httputil.NewJSONResponseWriterLogger(factory)
@@ -46197,6 +46250,7 @@ func newWebAppConnectWeb3AccountHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
@@ -46960,6 +47014,7 @@ func newWebAppMissingWeb3WalletHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:              cookieManager,
 		OAuthConfig:          oAuthConfig,
 		UIConfig:             uiConfig,
+		TrustProxy:           trustProxy,
 		Graph:                interactionService,
 	}
 	uiFeatureConfig := featureConfig.UI
