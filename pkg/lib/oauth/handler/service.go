@@ -16,6 +16,7 @@ import (
 )
 
 var errInvalidRefreshToken = protocol.NewError("invalid_grant", "invalid refresh token")
+var errInvalidIDPSession = protocol.NewError("invalid_grant", "invalid idp session")
 
 type TokenService struct {
 	RemoteIP        httputil.RemoteIP
@@ -66,8 +67,11 @@ func (s *TokenService) IssueOfflineGrant(
 		SSOEnabled: opts.SSOEnabled,
 	}
 
-	expiry := s.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClient(offlineGrant, client)
-	err := s.OfflineGrants.CreateOfflineGrant(offlineGrant, expiry)
+	expiry, err := s.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClient(offlineGrant, client)
+	if err != nil {
+		return nil, err
+	}
+	err = s.OfflineGrants.CreateOfflineGrant(offlineGrant, expiry)
 	if err != nil {
 		return nil, err
 	}

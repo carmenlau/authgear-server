@@ -492,6 +492,7 @@ func newSessionMiddleware(p *deps.RequestProvider) httproute.Middleware {
 	}
 	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
 		OAuthConfig: oAuthConfig,
+		IDPSessions: provider,
 	}
 	oauthResolver := &oauth2.Resolver{
 		RemoteIP:           remoteIP,

@@ -286,7 +286,10 @@ func (h *TokenHandler) handleRefreshToken(
 		return nil, err
 	}
 
-	expiry := h.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClient(offlineGrant, client)
+	expiry, err := h.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClient(offlineGrant, client)
+	if err != nil {
+		return nil, err
+	}
 	_, err = h.OfflineGrants.UpdateOfflineGrantDeviceInfo(offlineGrant.ID, deviceInfo, expiry)
 	if err != nil {
 		return nil, err
@@ -713,8 +716,12 @@ func (h *TokenHandler) issueTokensForAuthorizationCode(
 			offlineGrant, err := h.OfflineGrants.GetOfflineGrant(sessionID)
 			if err == nil {
 				if info.AuthenticatedAt.After(offlineGrant.AuthenticatedAt) {
-					expiry := h.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClient(offlineGrant, client)
-					_, err := h.OfflineGrants.UpdateOfflineGrantAuthenticatedAt(offlineGrant.ID, info.AuthenticatedAt, expiry)
+					expiry, err := h.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClient(offlineGrant, client)
+					if err != nil {
+						return nil, err
+					}
+
+					_, err = h.OfflineGrants.UpdateOfflineGrantAuthenticatedAt(offlineGrant.ID, info.AuthenticatedAt, expiry)
 					if err != nil {
 						return nil, err
 					}
