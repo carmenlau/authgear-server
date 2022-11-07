@@ -37,6 +37,7 @@ type Resolver struct {
 	Sessions           ResolverSessionProvider
 	Cookies            ResolverCookieManager
 	Clock              clock.Clock
+	OfflineGrantExpiry OfflineGrantExpiryService
 }
 
 func (re *Resolver) Resolve(rw http.ResponseWriter, r *http.Request) (session.Session, error) {
@@ -175,7 +176,7 @@ func (re *Resolver) resolveCookie(r *http.Request) (session.Session, error) {
 }
 
 func (re *Resolver) accessOfflineGrant(offlineGrant *OfflineGrant, accessEvent access.Event) (*OfflineGrant, error) {
-	expiry, err := ComputeOfflineGrantExpiryWithClients(offlineGrant, re.OAuthConfig)
+	expiry, err := re.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClients(offlineGrant)
 	if errors.Is(err, ErrGrantNotFound) {
 		return nil, session.ErrInvalidSession
 	} else if err != nil {

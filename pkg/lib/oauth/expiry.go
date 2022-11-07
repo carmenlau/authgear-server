@@ -6,10 +6,14 @@ import (
 	"github.com/authgear/authgear-server/pkg/lib/config"
 )
 
-func ComputeOfflineGrantExpiryWithClients(s *OfflineGrant, cfg *config.OAuthConfig) (expiry time.Time, err error) {
+type OfflineGrantExpiryService struct {
+	OAuthConfig *config.OAuthConfig
+}
+
+func (s *OfflineGrantExpiryService) ComputeOfflineGrantExpiryWithClients(session *OfflineGrant) (expiry time.Time, err error) {
 	var clientConfig *config.OAuthClientConfig
-	for _, c := range cfg.Clients {
-		if c.ClientID == s.ClientID {
+	for _, c := range s.OAuthConfig.Clients {
+		if c.ClientID == session.ClientID {
 			cc := c
 			clientConfig = &cc
 		}
@@ -20,14 +24,14 @@ func ComputeOfflineGrantExpiryWithClients(s *OfflineGrant, cfg *config.OAuthConf
 		return
 	}
 
-	expiry = ComputeOfflineGrantExpiryWithClient(s, clientConfig)
+	expiry = s.ComputeOfflineGrantExpiryWithClient(session, clientConfig)
 	return
 }
 
-func ComputeOfflineGrantExpiryWithClient(s *OfflineGrant, cfg *config.OAuthClientConfig) (expiry time.Time) {
-	expiry = s.CreatedAt.Add(cfg.RefreshTokenLifetime.Duration())
+func (s *OfflineGrantExpiryService) ComputeOfflineGrantExpiryWithClient(session *OfflineGrant, cfg *config.OAuthClientConfig) (expiry time.Time) {
+	expiry = session.CreatedAt.Add(cfg.RefreshTokenLifetime.Duration())
 	if *cfg.RefreshTokenIdleTimeoutEnabled {
-		idleExpiry := s.AccessInfo.LastAccess.Timestamp.Add(cfg.RefreshTokenIdleTimeout.Duration())
+		idleExpiry := session.AccessInfo.LastAccess.Timestamp.Add(cfg.RefreshTokenIdleTimeout.Duration())
 		if idleExpiry.Before(expiry) {
 			expiry = idleExpiry
 		}

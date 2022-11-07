@@ -490,6 +490,9 @@ func newSessionMiddleware(p *deps.RequestProvider) httproute.Middleware {
 		UserClaims: idTokenIssuer,
 		BaseURL:    endpointsProvider,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	oauthResolver := &oauth2.Resolver{
 		RemoteIP:           remoteIP,
 		UserAgentString:    userAgentString,
@@ -502,6 +505,7 @@ func newSessionMiddleware(p *deps.RequestProvider) httproute.Middleware {
 		Sessions:           provider,
 		Cookies:            cookieManager,
 		Clock:              clock,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	middlewareLogger := session.NewMiddlewareLogger(factory)
 	analyticredisHandle := appProvider.AnalyticRedis

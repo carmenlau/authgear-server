@@ -617,10 +617,14 @@ func newUserService(ctx context.Context, p *deps.BackgroundProvider, appID strin
 		Clock:       clockClock,
 	}
 	oAuthConfig := appConfig.OAuth
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{

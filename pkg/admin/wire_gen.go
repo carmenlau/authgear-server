@@ -651,10 +651,14 @@ func newGraphQLHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{

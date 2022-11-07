@@ -636,10 +636,14 @@ func newOAuthAuthorizeHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:   cookieManager,
 		CookieDef: cookieDef2,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  store,
-		Clock:  clock,
-		Config: oAuthConfig,
+		Store:              store,
+		Clock:              clock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -829,6 +833,9 @@ func newOAuthAuthorizeHandler(p *deps.RequestProvider) http.Handler {
 		AppID:   appID,
 		Clock:   clock,
 	}
+	oauthOfflineGrantExpiryService := &oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	loginHintHandler := &webapp2.LoginHintHandler{
 		Config:                  oAuthConfig,
 		Anonymous:               anonymousProvider,
@@ -839,6 +846,7 @@ func newOAuthAuthorizeHandler(p *deps.RequestProvider) http.Handler {
 		Clock:                   clock,
 		Cookies:                 cookieManager,
 		Pages:                   webappService2,
+		OfflineGrantExpiry:      oauthOfflineGrantExpiryService,
 	}
 	oAuthKeyMaterials := deps.ProvideOAuthKeyMaterials(secretConfig)
 	idTokenIssuer := &oidc.IDTokenIssuer{
@@ -1415,10 +1423,14 @@ func newOAuthConsentHandler(p *deps.RequestProvider) http.Handler {
 		Cookies:   cookieManager,
 		CookieDef: cookieDef2,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  store,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              store,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -1608,6 +1620,9 @@ func newOAuthConsentHandler(p *deps.RequestProvider) http.Handler {
 		AppID:   appID,
 		Clock:   clockClock,
 	}
+	oauthOfflineGrantExpiryService := &oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	loginHintHandler := &webapp2.LoginHintHandler{
 		Config:                  oAuthConfig,
 		Anonymous:               anonymousProvider,
@@ -1618,6 +1633,7 @@ func newOAuthConsentHandler(p *deps.RequestProvider) http.Handler {
 		Clock:                   clockClock,
 		Cookies:                 cookieManager,
 		Pages:                   webappService2,
+		OfflineGrantExpiry:      oauthOfflineGrantExpiryService,
 	}
 	oAuthKeyMaterials := deps.ProvideOAuthKeyMaterials(secretConfig)
 	idTokenIssuer := &oidc.IDTokenIssuer{
@@ -1723,6 +1739,9 @@ func newOAuthTokenHandler(p *deps.RequestProvider) http.Handler {
 		SQLBuilder:  sqlBuilderApp,
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
+	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
 	}
 	interactionLogger := interaction.NewLogger(factory)
 	rootProvider := appProvider.RootProvider
@@ -2173,9 +2192,10 @@ func newOAuthTokenHandler(p *deps.RequestProvider) http.Handler {
 		CookieDef: cookieDef,
 	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  store,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              store,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -2382,18 +2402,19 @@ func newOAuthTokenHandler(p *deps.RequestProvider) http.Handler {
 	}
 	tokenGenerator := _wireTokenGeneratorValue
 	tokenService := handler.TokenService{
-		RemoteIP:          remoteIP,
-		UserAgentString:   userAgentString,
-		AppID:             appID,
-		Config:            oAuthConfig,
-		Authorizations:    authorizationStore,
-		OfflineGrants:     store,
-		AccessGrants:      store,
-		AccessEvents:      eventProvider,
-		AccessTokenIssuer: accessTokenEncoding,
-		GenerateToken:     tokenGenerator,
-		Clock:             clockClock,
-		Users:             queries,
+		RemoteIP:           remoteIP,
+		UserAgentString:    userAgentString,
+		AppID:              appID,
+		Config:             oAuthConfig,
+		Authorizations:     authorizationStore,
+		OfflineGrants:      store,
+		AccessGrants:       store,
+		OfflineGrantExpiry: offlineGrantExpiryService,
+		AccessEvents:       eventProvider,
+		AccessTokenIssuer:  accessTokenEncoding,
+		GenerateToken:      tokenGenerator,
+		Clock:              clockClock,
+		Users:              queries,
 	}
 	tokenHandler := &handler.TokenHandler{
 		AppID:                  appID,
@@ -2405,6 +2426,7 @@ func newOAuthTokenHandler(p *deps.RequestProvider) http.Handler {
 		CodeGrants:             store,
 		OfflineGrants:          store,
 		AppSessionTokens:       store,
+		OfflineGrantExpiry:     offlineGrantExpiryService,
 		Graphs:                 interactionService,
 		IDTokenIssuer:          idTokenIssuer,
 		Clock:                  clockClock,
@@ -2466,10 +2488,14 @@ func newOAuthRevokeHandler(p *deps.RequestProvider) http.Handler {
 		Clock:       clockClock,
 	}
 	oAuthConfig := appConfig.OAuth
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  store,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              store,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	remoteIP := deps.ProvideRemoteIP(request, trustProxy)
 	userAgentString := deps.ProvideUserAgentString(request)
@@ -3649,10 +3675,14 @@ func newOAuthEndSessionHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  store,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              store,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	remoteIP := deps.ProvideRemoteIP(request, trustProxy)
 	userAgentString := deps.ProvideUserAgentString(request)
@@ -4118,6 +4148,9 @@ func newOAuthAppSessionTokenHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	interactionLogger := interaction.NewLogger(factory)
 	rootProvider := appProvider.RootProvider
 	environmentConfig := rootProvider.EnvironmentConfig
@@ -4567,9 +4600,10 @@ func newOAuthAppSessionTokenHandler(p *deps.RequestProvider) http.Handler {
 		CookieDef: cookieDef,
 	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  store,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              store,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -4776,18 +4810,19 @@ func newOAuthAppSessionTokenHandler(p *deps.RequestProvider) http.Handler {
 	}
 	tokenGenerator := _wireTokenGeneratorValue
 	tokenService := handler.TokenService{
-		RemoteIP:          remoteIP,
-		UserAgentString:   userAgentString,
-		AppID:             appID,
-		Config:            oAuthConfig,
-		Authorizations:    authorizationStore,
-		OfflineGrants:     store,
-		AccessGrants:      store,
-		AccessEvents:      eventProvider,
-		AccessTokenIssuer: accessTokenEncoding,
-		GenerateToken:     tokenGenerator,
-		Clock:             clockClock,
-		Users:             queries,
+		RemoteIP:           remoteIP,
+		UserAgentString:    userAgentString,
+		AppID:              appID,
+		Config:             oAuthConfig,
+		Authorizations:     authorizationStore,
+		OfflineGrants:      store,
+		AccessGrants:       store,
+		OfflineGrantExpiry: offlineGrantExpiryService,
+		AccessEvents:       eventProvider,
+		AccessTokenIssuer:  accessTokenEncoding,
+		GenerateToken:      tokenGenerator,
+		Clock:              clockClock,
+		Users:              queries,
 	}
 	tokenHandler := &handler.TokenHandler{
 		AppID:                  appID,
@@ -4799,6 +4834,7 @@ func newOAuthAppSessionTokenHandler(p *deps.RequestProvider) http.Handler {
 		CodeGrants:             store,
 		OfflineGrants:          store,
 		AppSessionTokens:       store,
+		OfflineGrantExpiry:     offlineGrantExpiryService,
 		Graphs:                 interactionService,
 		IDTokenIssuer:          idTokenIssuer,
 		Clock:                  clockClock,
@@ -5355,10 +5391,14 @@ func newAPIAnonymousUserSignupHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -5565,18 +5605,19 @@ func newAPIAnonymousUserSignupHandler(p *deps.RequestProvider) http.Handler {
 	}
 	tokenGenerator := _wireTokenGeneratorValue
 	tokenService := handler.TokenService{
-		RemoteIP:          remoteIP,
-		UserAgentString:   userAgentString,
-		AppID:             appID,
-		Config:            oAuthConfig,
-		Authorizations:    authorizationStore,
-		OfflineGrants:     redisStore,
-		AccessGrants:      redisStore,
-		AccessEvents:      eventProvider,
-		AccessTokenIssuer: accessTokenEncoding,
-		GenerateToken:     tokenGenerator,
-		Clock:             clockClock,
-		Users:             queries,
+		RemoteIP:           remoteIP,
+		UserAgentString:    userAgentString,
+		AppID:              appID,
+		Config:             oAuthConfig,
+		Authorizations:     authorizationStore,
+		OfflineGrants:      redisStore,
+		AccessGrants:       redisStore,
+		OfflineGrantExpiry: offlineGrantExpiryService,
+		AccessEvents:       eventProvider,
+		AccessTokenIssuer:  accessTokenEncoding,
+		GenerateToken:      tokenGenerator,
+		Clock:              clockClock,
+		Users:              queries,
 	}
 	anonymousStoreRedis := &anonymous.StoreRedis{
 		Context: contextContext,
@@ -6091,10 +6132,14 @@ func newAPIAnonymousUserPromotionCodeHandler(p *deps.RequestProvider) http.Handl
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -6301,18 +6346,19 @@ func newAPIAnonymousUserPromotionCodeHandler(p *deps.RequestProvider) http.Handl
 	}
 	tokenGenerator := _wireTokenGeneratorValue
 	tokenService := handler.TokenService{
-		RemoteIP:          remoteIP,
-		UserAgentString:   userAgentString,
-		AppID:             appID,
-		Config:            oAuthConfig,
-		Authorizations:    authorizationStore,
-		OfflineGrants:     redisStore,
-		AccessGrants:      redisStore,
-		AccessEvents:      eventProvider,
-		AccessTokenIssuer: accessTokenEncoding,
-		GenerateToken:     tokenGenerator,
-		Clock:             clockClock,
-		Users:             queries,
+		RemoteIP:           remoteIP,
+		UserAgentString:    userAgentString,
+		AppID:              appID,
+		Config:             oAuthConfig,
+		Authorizations:     authorizationStore,
+		OfflineGrants:      redisStore,
+		AccessGrants:       redisStore,
+		OfflineGrantExpiry: offlineGrantExpiryService,
+		AccessEvents:       eventProvider,
+		AccessTokenIssuer:  accessTokenEncoding,
+		GenerateToken:      tokenGenerator,
+		Clock:              clockClock,
+		Users:              queries,
 	}
 	anonymousStoreRedis := &anonymous.StoreRedis{
 		Context: contextContext,
@@ -6930,10 +6976,14 @@ func newWebAppLoginHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -7712,10 +7762,14 @@ func newWebAppSignupHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -8493,10 +8547,14 @@ func newWebAppPromoteHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -9257,10 +9315,14 @@ func newWebAppSelectAccountHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -10019,10 +10081,14 @@ func newWebAppSSOCallbackHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -10771,10 +10837,14 @@ func newWechatAuthHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -11526,10 +11596,14 @@ func newWechatCallbackHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -12284,10 +12358,14 @@ func newWebAppEnterLoginIDHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -13044,10 +13122,14 @@ func newWebAppEnterPasswordHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -13802,10 +13884,14 @@ func newWebAppUsePasskeyHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -14560,10 +14646,14 @@ func newWebAppCreatePasswordHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -15319,10 +15409,14 @@ func newWebAppCreatePasskeyHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -16077,10 +16171,14 @@ func newWebAppPromptCreatePasskeyHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -16835,10 +16933,14 @@ func newWebAppSetupTOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -17595,10 +17697,14 @@ func newWebAppEnterTOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -18353,10 +18459,14 @@ func newWebAppSetupOOBOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -19111,10 +19221,14 @@ func newWebAppEnterOOBOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -19871,10 +19985,14 @@ func newWebAppSetupWhatsappOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -20629,10 +20747,14 @@ func newWebAppWhatsappOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -21816,10 +21938,14 @@ func newWebAppEnterRecoveryCodeHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -22574,10 +22700,14 @@ func newWebAppSetupRecoveryCodeHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -23328,10 +23458,14 @@ func newWebAppVerifyIdentityHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -24084,10 +24218,14 @@ func newWebAppVerifyIdentitySuccessHandler(p *deps.RequestProvider) http.Handler
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -24838,10 +24976,14 @@ func newWebAppForgotPasswordHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -25602,10 +25744,14 @@ func newWebAppForgotPasswordSuccessHandler(p *deps.RequestProvider) http.Handler
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -26356,10 +26502,14 @@ func newWebAppResetPasswordHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -27111,10 +27261,14 @@ func newWebAppResetPasswordSuccessHandler(p *deps.RequestProvider) http.Handler 
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -27865,10 +28019,14 @@ func newWebAppSettingsHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -28650,10 +28808,14 @@ func newWebAppSettingsProfileHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -29415,10 +29577,14 @@ func newWebAppSettingsProfileEditHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -30193,10 +30359,14 @@ func newWebAppSettingsIdentityHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -30955,10 +31125,14 @@ func newWebAppSettingsBiometricHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -31710,10 +31884,14 @@ func newWebAppSettingsMFAHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -32473,10 +32651,14 @@ func newWebAppSettingsTOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -33228,10 +33410,14 @@ func newWebAppSettingsPasskeyHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -33983,10 +34169,14 @@ func newWebAppSettingsOOBOTPHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -34738,10 +34928,14 @@ func newWebAppSettingsRecoveryCodeHandler(p *deps.RequestProvider) http.Handler 
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -35494,10 +35688,14 @@ func newWebAppSettingsSessionsHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -36260,10 +36458,14 @@ func newWebAppForceChangePasswordHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -37015,10 +37217,14 @@ func newWebAppSettingsChangePasswordHandler(p *deps.RequestProvider) http.Handle
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -37770,10 +37976,14 @@ func newWebAppForceChangeSecondaryPasswordHandler(p *deps.RequestProvider) http.
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -38525,10 +38735,14 @@ func newWebAppSettingsChangeSecondaryPasswordHandler(p *deps.RequestProvider) ht
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -39280,10 +39494,14 @@ func newWebAppSettingsDeleteAccountHandler(p *deps.RequestProvider) http.Handler
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -40042,10 +40260,14 @@ func newWebAppSettingsDeleteAccountSuccessHandler(p *deps.RequestProvider) http.
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -40798,10 +41020,14 @@ func newWebAppAccountStatusHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -41552,10 +41778,14 @@ func newWebAppLogoutHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -42325,10 +42555,14 @@ func newWebAppReturnHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -43079,10 +43313,14 @@ func newWebAppErrorHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -43833,10 +44071,14 @@ func newWebAppNotFoundHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -44604,10 +44846,14 @@ func newWebAppPasskeyCreationOptionsHandler(p *deps.RequestProvider) http.Handle
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -45325,10 +45571,14 @@ func newWebAppPasskeyRequestOptionsHandler(p *deps.RequestProvider) http.Handler
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -46045,10 +46295,14 @@ func newWebAppConnectWeb3AccountHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -46809,10 +47063,14 @@ func newWebAppMissingWeb3WalletHandler(p *deps.RequestProvider) http.Handler {
 		SQLExecutor: sqlExecutor,
 		Clock:       clockClock,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{
@@ -47676,6 +47934,9 @@ func newSessionMiddleware(p *deps.RequestProvider) httproute.Middleware {
 		UserClaims: idTokenIssuer,
 		BaseURL:    endpointsProvider,
 	}
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	oauthResolver := &oauth2.Resolver{
 		RemoteIP:           remoteIP,
 		UserAgentString:    userAgentString,
@@ -47688,6 +47949,7 @@ func newSessionMiddleware(p *deps.RequestProvider) httproute.Middleware {
 		Sessions:           provider,
 		Cookies:            cookieManager,
 		Clock:              clockClock,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	middlewareLogger := session.NewMiddlewareLogger(factory)
 	analyticredisHandle := appProvider.AnalyticRedis
@@ -48311,10 +48573,14 @@ func newSettingsSubRoutesMiddleware(p *deps.RequestProvider) httproute.Middlewar
 		Clock:       clockClock,
 	}
 	oAuthConfig := appConfig.OAuth
+	offlineGrantExpiryService := oauth2.OfflineGrantExpiryService{
+		OAuthConfig: oAuthConfig,
+	}
 	sessionManager := &oauth2.SessionManager{
-		Store:  redisStore,
-		Clock:  clockClock,
-		Config: oAuthConfig,
+		Store:              redisStore,
+		Clock:              clockClock,
+		Config:             oAuthConfig,
+		OfflineGrantExpiry: offlineGrantExpiryService,
 	}
 	accountDeletionConfig := appConfig.AccountDeletion
 	coordinator := &facade.Coordinator{

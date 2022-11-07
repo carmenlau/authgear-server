@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/authgear/authgear-server/pkg/lib/authn/identity/anonymous"
 	"github.com/authgear/authgear-server/pkg/lib/config"
@@ -47,6 +48,10 @@ type LoginHintPageService interface {
 	PostWithIntent(session *Session, intent interaction.Intent, inputFn func() (interface{}, error)) (*Result, error)
 }
 
+type OfflineGrantExpiryService interface {
+	ComputeOfflineGrantExpiryWithClients(session *oauth.OfflineGrant) (expiry time.Time, err error)
+}
+
 type LoginHintHandler struct {
 	Config                  *config.OAuthConfig
 	Anonymous               AnonymousIdentityProvider
@@ -57,6 +62,7 @@ type LoginHintHandler struct {
 	Clock                   clock.Clock
 	Cookies                 CookieManager
 	Pages                   LoginHintPageService
+	OfflineGrantExpiry      OfflineGrantExpiryService
 }
 
 type HandleLoginHintOptions struct {
@@ -167,7 +173,7 @@ func (r *LoginHintHandler) resolveAppSessionToken(token string) (string, error) 
 		return "", err
 	}
 
-	expiry, err := oauth.ComputeOfflineGrantExpiryWithClients(offlineGrant, r.Config)
+	expiry, err := r.OfflineGrantExpiry.ComputeOfflineGrantExpiryWithClients(offlineGrant)
 	if err != nil {
 		return "", err
 	}
