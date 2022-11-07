@@ -120,14 +120,7 @@ func (re *Resolver) resolveHeader(r *http.Request) (session.Session, error) {
 			return nil, err
 		}
 
-		expiry, err := ComputeOfflineGrantExpiryWithClients(g, re.OAuthConfig)
-		if errors.Is(err, ErrGrantNotFound) {
-			return nil, session.ErrInvalidSession
-		} else if err != nil {
-			return nil, err
-		}
-
-		g, err = re.OfflineGrants.AccessWithID(g.ID, event, expiry)
+		g, err = re.accessOfflineGrant(g, event)
 		if err != nil {
 			return nil, err
 		}
@@ -172,6 +165,16 @@ func (re *Resolver) resolveCookie(r *http.Request) (session.Session, error) {
 		return nil, session.ErrInvalidSession
 	}
 
+	event := access.NewEvent(re.Clock.NowUTC(), re.RemoteIP, re.UserAgentString)
+	offlineGrant, err = re.accessOfflineGrant(offlineGrant, event)
+	if err != nil {
+		return nil, err
+	}
+
+	return offlineGrant, nil
+}
+
+func (re *Resolver) accessOfflineGrant(offlineGrant *OfflineGrant, accessEvent access.Event) (*OfflineGrant, error) {
 	expiry, err := ComputeOfflineGrantExpiryWithClients(offlineGrant, re.OAuthConfig)
 	if errors.Is(err, ErrGrantNotFound) {
 		return nil, session.ErrInvalidSession
@@ -179,13 +182,25 @@ func (re *Resolver) resolveCookie(r *http.Request) (session.Session, error) {
 		return nil, err
 	}
 
-	event := access.NewEvent(re.Clock.NowUTC(), re.RemoteIP, re.UserAgentString)
-	offlineGrant, err = re.OfflineGrants.AccessWithID(offlineGrant.ID, event, expiry)
+	// When accessing the offline grant, also access its idp session
+	if offlineGrant.SSOEnabled {
+		if offlineGrant.IDPSessionID == "" {
+			return nil, session.ErrInvalidSession
+		}
+		_, err := re.Sessions.AccessWithID(offlineGrant.IDPSessionID, accessEvent)
+		if errors.Is(err, idpsession.ErrSessionNotFound) {
+			return nil, session.ErrInvalidSession
+		} else if err != nil {
+			return nil, err
+		}
+	}
+
+	offlineGrant, err = re.OfflineGrants.AccessWithID(offlineGrant.ID, accessEvent, expiry)
 	if err != nil {
 		return nil, err
 	}
 
-	return offlineGrant, nil
+	return offlineGrant, err
 }
 
 func parseAuthorizationHeader(r *http.Request) (token string) {
