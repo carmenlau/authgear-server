@@ -65,7 +65,7 @@ func (h *LogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		clientID := clientid.GetClientID(r.Context())
+		clientID := clientid.GetClientID(r)
 		client, _ := h.OAuth.GetClient(clientID)
 		postLogoutRedirectURI := webapp.ResolvePostLogoutRedirectURI(client, r.FormValue("post_logout_redirect_uri"), h.UIConfig)
 		redirectURI := webapp.GetRedirectURI(r, bool(h.TrustProxy), postLogoutRedirectURI)

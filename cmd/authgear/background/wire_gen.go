@@ -202,6 +202,7 @@ func newUserService(ctx context.Context, p *deps.BackgroundProvider, appID strin
 	}
 	welcomeMessageConfig := appConfig.WelcomeMessage
 	noopTaskQueue := NewNoopTaskQueue()
+	request := NewDummyHTTPRequest()
 	remoteIP := ProvideRemoteIP()
 	userAgentString := ProvideUserAgentString()
 	eventLogger := event.NewLogger(factory)
@@ -278,7 +279,6 @@ func newUserService(ctx context.Context, p *deps.BackgroundProvider, appID strin
 		Redis:   appredisHandle,
 		AppID:   configAppID,
 	}
-	request := NewDummyHTTPRequest()
 	trustProxy := environmentConfig.TrustProxy
 	configService := &passkey2.ConfigService{
 		Request:            request,
@@ -534,7 +534,7 @@ func newUserService(ctx context.Context, p *deps.BackgroundProvider, appID strin
 		Service:  elasticsearchService,
 		Database: handle,
 	}
-	eventService := event.NewService(ctx, remoteIP, userAgentString, eventLogger, handle, clockClock, localizationConfig, storeImpl, resolverImpl, sink, auditSink, tutorialSink, elasticsearchSink)
+	eventService := event.NewService(ctx, request, remoteIP, userAgentString, eventLogger, handle, clockClock, localizationConfig, storeImpl, resolverImpl, sink, auditSink, tutorialSink, elasticsearchSink)
 	welcomemessageProvider := &welcomemessage.Provider{
 		Translation:          translationService,
 		RateLimiter:          limiter,

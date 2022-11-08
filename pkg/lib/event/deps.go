@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/google/wire"
 
@@ -25,6 +26,7 @@ var DependencySet = wire.NewSet(
 
 func NewService(
 	ctx context.Context,
+	request *http.Request,
 	remoteIP httputil.RemoteIP,
 	userAgentString httputil.UserAgentString,
 	logger Logger,
@@ -40,6 +42,7 @@ func NewService(
 ) *Service {
 	return &Service{
 		Context:         ctx,
+		Request:         request,
 		RemoteIP:        remoteIP,
 		UserAgentString: userAgentString,
 		Logger:          logger,

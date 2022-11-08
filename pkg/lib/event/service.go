@@ -3,6 +3,7 @@ package event
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/authgear/authgear-server/pkg/api/event"
 	"github.com/authgear/authgear-server/pkg/lib/clientid"
@@ -40,6 +41,7 @@ func NewLogger(lf *log.Factory) Logger { return Logger{lf.New("event")} }
 
 type Service struct {
 	Context         context.Context
+	Request         *http.Request
 	RemoteIP        httputil.RemoteIP
 	UserAgentString httputil.UserAgentString
 	Logger          Logger
@@ -181,7 +183,7 @@ func (s *Service) makeContext(payload event.Payload) event.Context {
 
 	triggeredBy := payload.GetTriggeredBy()
 
-	clientID := clientid.GetClientID(s.Context)
+	clientID := clientid.GetClientID(s.Request)
 
 	ctx := &event.Context{
 		Timestamp:          s.Clock.NowUTC().Unix(),

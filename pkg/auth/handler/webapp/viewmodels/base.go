@@ -138,7 +138,7 @@ type BaseViewModeler struct {
 
 func (m *BaseViewModeler) ViewModel(r *http.Request, rw http.ResponseWriter) BaseViewModel {
 	now := m.Clock.NowUTC().Unix()
-	clientID := clientid.GetClientID(r.Context())
+	clientID := clientid.GetClientID(r)
 	client, _ := m.OAuth.GetClient(clientID)
 	clientURI := webapp.ResolveClientURI(client, m.AuthUI)
 	clientName := ""

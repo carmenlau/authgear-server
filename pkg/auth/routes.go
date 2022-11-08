@@ -110,7 +110,6 @@ func NewRouter(p *deps.RootProvider, configSource *configsource.ConfigSource) *h
 		p.Middleware(newWebAppUILocalesMiddleware),
 		p.Middleware(newWebAppColorSchemeMiddleware),
 		p.Middleware(newWebAppWeChatRedirectURIMiddleware),
-		p.Middleware(newWebAppClientIDMiddleware),
 		p.Middleware(newTutorialMiddleware),
 	)
 	webappSSOCallbackChain := httproute.Chain(
