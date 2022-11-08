@@ -27,6 +27,10 @@ type Session interface {
 	GetAuthenticationInfo() authenticationinfo.T
 
 	ToAPIModel() *model.Session
+
+	Equal(s Session) bool
+	SSOGroupIDPSessionID() string
+	IsSameSSOGroup(s Session) bool
 }
 
 type DeleteReason string
