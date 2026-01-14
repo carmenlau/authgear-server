@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix log levels in database.go\n\n- Change Info to Debug for cache invalidation operations \\(lines 309, 315, 324\\)\n  Cache invalidation is a technical detail and high-noise operation that\n  should not clutter Info logs\n  \n- Change Info to Debug for config loading from DB \\(line 447\\)\n  This runs on every app context load \\(high frequency operation\\)\n\nEOF\n\\)\")",
+      "Bash(git commit:*)"
+    ]
+  }
+}
