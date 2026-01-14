@@ -59,7 +59,6 @@ When `--fix` flag is used:
      - Fix message format: move variable data to attributes
      - Change Error to Warn for recoverable retry scenarios
 
-     Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
      ```
 
 2. After fixing each file:
