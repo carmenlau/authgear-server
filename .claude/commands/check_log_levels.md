@@ -5,6 +5,7 @@ Cross-check log levels in Go code against the logging guidelines in CONTRIBUTING
 1. Search for all logging statements in the codebase using patterns:
    - `logger.Debug(`, `logger.Info(`, `logger.Warn(`, `logger.Error(`
    - `logger.WithError(`
+   - `logger.WithSkipLogging()` (special case - see below)
    - Other common logging patterns
 
 2. For each logging statement found, verify:
@@ -28,6 +29,18 @@ Cross-check log levels in Go code against the logging guidelines in CONTRIBUTING
      - No secrets or PII in logs
 
    - **No duplicate error logs**: Check if error is logged multiple times across layers
+
+   - **WithSkipLogging usage** (IMPORTANT):
+     - `WithSkipLogging()` was historically added when Error logs were too noisy
+     - It prevents actual logging output but keeps the log call for metrics/context
+     - **When you find `logger.WithSkipLogging().Error()`:**
+       1. Remove the `.WithSkipLogging()` call
+       2. Change the log level from `Error` to `Warn`
+       3. Rationale: If the log was too noisy for Error level, it should be Warn
+     - Example fix:
+       - Before: `logger.WithSkipLogging().Error(ctx, "CSRF Forbidden")`
+       - After: `logger.Warn(ctx, "CSRF Forbidden")`
+     - This allows the log to be visible at Warn level without being too noisy
 
 3. Generate a report with:
    - File path and line number
@@ -101,7 +114,31 @@ When `--report <filename.md>` flag is used:
 
 3. Save the report to the specified filename in the current working directory
 
-## Examples
+## WithSkipLogging Examples
+
+When you encounter `WithSkipLogging()` in the code:
+
+**Example 1: CSRF Protection**
+```go
+// BEFORE (needs fixing)
+logger.With(...).WithSkipLogging().Error(ctx, "CSRF Forbidden")
+
+// AFTER (fixed)
+logger.With(...).Warn(ctx, "CSRF Forbidden")
+```
+
+**Example 2: Rate Limiting**
+```go
+// BEFORE (needs fixing)
+logger.WithSkipStackTrace().WithSkipLogging().Error(ctx, "rate limited", ...)
+
+// AFTER (fixed)
+logger.WithSkipStackTrace().Warn(ctx, "rate limited", ...)
+```
+
+**Rationale:** These were marked as `Error` with `WithSkipLogging()` because they were too noisy. The correct solution is to use `Warn` level instead, which better reflects that these are expected security/throttling events, not operational failures.
+
+## Usage Examples
 
 ```bash
 # Check and display report in console
