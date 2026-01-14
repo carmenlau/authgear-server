@@ -39,5 +39,34 @@ Cross-check log levels in Go code against the logging guidelines in CONTRIBUTING
 
 ## Usage
 
-- `/check_log_levels` - Check all logging statements in the codebase
-- `/check_log_levels <path>` - Check logging in specific file or directory
+- `/check_log_levels` - Check all logging statements in the codebase (report only)
+- `/check_log_levels <path>` - Check logging in specific file or directory (report only)
+- `/check_log_levels --fix` - Check and fix all logging issues, commit each file separately
+- `/check_log_levels --fix <path>` - Check and fix logging in specific file or directory, commit each file separately
+
+## Fix and Commit Mode (--fix flag)
+
+When `--fix` flag is used:
+
+1. For each file with logging issues:
+   - Apply all necessary fixes to that file
+   - Create a git commit for that file with message format:
+     ```
+     Fix log levels in <filename>
+
+     - [List specific changes made, e.g.:]
+     - Change Info to Debug for high-volume per-request logs
+     - Fix message format: move variable data to attributes
+     - Change Error to Warn for recoverable retry scenarios
+
+     Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+     ```
+
+2. After fixing each file:
+   - Show summary of changes made
+   - List files that had no issues (unchanged)
+
+3. At the end, provide:
+   - Total files fixed and committed
+   - Total files checked but unchanged
+   - Summary of all changes across all files
