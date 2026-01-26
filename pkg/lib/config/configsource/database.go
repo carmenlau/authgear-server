@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"math/rand/v2"
 	"net"
 	"net/http"
 	"sync"
@@ -475,6 +476,11 @@ func (a *dbApp) doLoad(ctx context.Context, d *Database) (*config.AppContext, er
 		}
 
 		domains, err := store.GetDomainsByAppID(ctx, a.appID)
+		isTrue := rand.Uint32N(2) == 0
+		logger.Info(ctx, "get domains from app id", slog.Bool("is_true", isTrue))
+		if isTrue {
+			return errors.New("test failed to load domains error")
+		}
 		if err != nil {
 			return errors.Join(errors.New("failed to get domains from db"), err)
 		}
