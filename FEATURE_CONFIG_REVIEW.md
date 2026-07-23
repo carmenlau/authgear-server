@@ -435,6 +435,99 @@ here only so it isn't confused with items 1–7, which are live, actively-used s
 
 ---
 
+## 4. Site Admin Portal UI candidates
+
+### `identity`
+
+- [ ] `login_id.types.phone.disabled`
+- [ ] `oauth.maximum_providers`
+- [ ] `oauth.providers.<name>.disabled` (9 providers)
+- [ ] `biometric.disabled`
+
+### `authentication`
+
+- [ ] `secondary_authenticators.oob_otp_sms.disabled`
+
+### `authenticator`
+
+- [ ] `password.policy.minimum_guessable_level.disabled`
+- [ ] `password.policy.excluded_keywords.disabled`
+- [ ] `password.policy.history.disabled`
+
+### `ui`
+
+- [ ] `white_labeling.disabled`
+- [x] `phone_input.allowlist` — initial item: "Phone allowlist for SMS sending"
+
+### `custom_domain`
+
+- [ ] `disabled`
+
+### `oauth` (client)
+
+- [ ] `client.maximum`
+- [ ] `client.soft_maximum`
+- [x] `client.custom_ui_enabled` — initial item: "Enable Custom UI"
+- [ ] `client.app2app_enabled`
+
+### `hook`
+
+- [ ] `blocking_handler.maximum`
+- [ ] `non_blocking_handler.maximum`
+
+### `audit_log`
+
+- [x] `retrieval_days` — initial item: "Days for Audit Log retrieval"
+
+### `google_tag_manager`
+
+- [ ] `disabled`
+
+### `rate_limits` (top-level)
+
+- [ ] `disabled`
+
+### `messaging`
+
+- [ ] `rate_limits.sms` / `sms_per_ip` / `sms_per_target` / `email` / `email_per_ip` / `email_per_target`
+- [ ] `sms_usage` / `email_usage` / `whatsapp_usage` (deprecated)
+- [ ] `sms_usage_count_disabled` / `whatsapp_usage_count_disabled`
+- [x] `custom_sms_provider_disabled` — initial item: "Enable Custom SMS/SMTP" (SMS half; toggle inverted in UI)
+- [x] `custom_smtp_disabled` — initial item: "Enable Custom SMS/SMTP" (SMTP half; toggle inverted in UI)
+- [x] `template_customization_disabled` — initial item: "Enabled SMS/Email template customization" (toggle inverted in UI)
+
+### `usage`
+
+- [ ] `hooks[].url` / `.match`
+- [ ] `limits.sms` / `.email` / `.whatsapp` / `.user_import` / `.user_export`
+
+### `collaborator`
+
+- [ ] `maximum` / `soft_maximum`
+
+### `web3` *(deprecated)*
+
+- [ ] `nft.maximum`
+
+### `admin_api`
+
+- [ ] `create_session_enabled`
+- [ ] `user_import_usage` / `user_export_usage` (deprecated)
+
+### `test_mode`
+
+- [ ] `fixed_oob_otp.enabled` / `.code`
+- [ ] `deterministic_link_otp.enabled`
+- [ ] `sms.suppressed`
+- [ ] `email.suppressed`
+- [ ] `whatsapp.suppressed`
+
+### `fraud_protection`
+
+- [ ] `is_modifiable`
+
+---
+
 ## Appendix: stale test fixture data found
 
 While cross-checking `testdata/default_feature.yaml` against the live Go schema, two blocks were found
