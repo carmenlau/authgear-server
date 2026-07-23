@@ -37,21 +37,66 @@ App  >  Plan  >  Cluster (Custom)  >  Code default
 Defaults (`SetFieldDefaults`) are applied last of all, via `config.ParseFeatureConfig` on the fully-merged
 YAML (`resources.go:713`) — so a field is only ever defaulted if **none** of the 4 layers set it.
 
-### Merge granularity differs per section — whole-section replace vs. field-level merge
+### Merge granularity differs per section — and for most sections, whole-section replace is a confirmed trap, not a deliberate design choice
 
 `FeatureConfig.Merge` calls each top-level section's own `Merge` method, and **that method decides whether
 "a higher layer touches this section" means "override every field in it" or "override only the specific
-sub-fields it sets."** This is not uniform across the file — confirmed by reading every `feature_*.go`:
+sub-fields it sets."** This is not uniform across the file — confirmed by reading every `feature_*.go`.
 
-- **Whole-section replace** (most sections): `identity`, `authentication`, `authenticator`, `ui`,
-  `custom_domain`, `hook`, `audit_log`, `google_tag_manager`, `rate_limits` (top-level), `collaborator`,
-  `test_mode`, `fraud_protection`. Each of these `Merge` methods is a one-liner: `if layer.X == nil {
-  return c }; return layer.X` — i.e. if a higher layer's YAML mentions this section **at all**, that
-  layer's *entire* section replaces the lower layer's, field and all. **Practical trap:** if the Plan
-  layer sets `test_mode: { fixed_oob_otp: {...} }` and the App layer separately sets
-  `test_mode: { sms: { suppressed: true } }`, the App layer's `test_mode` object wins *in its entirety* —
-  the Plan's `fixed_oob_otp` is silently lost, because App didn't repeat it. There is no per-field
-  inheritance within these sections across layers.
+**Is whole-section replace actually dangerous, or just a theoretical concern?** To answer that I checked how
+layers are actually authored in production, not just how the algorithm works in the abstract:
+
+- Plan documents are hand-authored, **partial** YAML files, not exhaustively-defaulted ones. The pricing CLI
+  (`cmd/portal/cmd/cmdpricing/pricing.go`, `--feature-config-file`) feeds a raw file straight into
+  `Service.UpdatePlan` (`cmd/portal/plan/service.go:39-88`), which stores it via `parseRawFeatureConfig`
+  (`service.go:165-176`) — a **plain `json.Decode` with no `SetFieldDefaults` and no schema validation of the
+  stored value** (validation happens separately, on a throwaway parse whose result is discarded). So a pricing
+  admin bumping just `oauth.maximum_providers` for one plan tier, without repeating every other `identity`
+  sub-field, is the *normal*, sanctioned way to author a plan — not a hypothetical edge case.
+- `UpdatePlan` also pushes that same partial YAML into **every app's own App-layer slot**
+  (`consrc.Data[configsource.AuthgearFeatureYAML] = rawFeatureConfigYAML`, `service.go:82`) — so in steady
+  state the App layer is usually just a mirrored copy of the current Plan. But `UpdateAppPlan`
+  (`service.go:92-110`, called when an app is moved to a different plan) only updates `consrc.PlanName` —
+  it **never refreshes `Data[AuthgearFeatureYAML]`**. So immediately after a plan change, the App layer still
+  holds the *old* plan's (partial) feature config, and since App is the highest-precedence layer, it keeps
+  overriding the new Plan's settings, field by field, until someone happens to call `UpdatePlan` again for
+  the new plan. This is a real, reachable staleness gap, independent of merge granularity — it affects
+  field-level-merged sections too — but it means partial, section-clobbering documents are guaranteed to
+  exist in practice, not just in theory.
+
+Given that, here's the concrete failure mode for a **whole-section-replace** section, worked through end to
+end: Plan sets `identity: { oauth: { providers: { apple: { disabled: true } } } }` (disable Apple SSO for
+this tier) and nothing else under `identity`. Later, an App-layer document (a stale old-plan copy, or a
+one-off exception) sets `identity: { oauth: { maximum_providers: 150 } }` and nothing else. Because
+`IdentityFeatureConfig.Merge` is `if layer.Identity == nil { return c }; return layer.Identity` — a wholesale
+swap — the merged result's `identity.oauth.providers` becomes **nil** (App's document never mentioned it),
+and `apple.disabled` **silently reverts to the hardcoded default `false`** once `SetFieldDefaults` runs. The
+Plan's SSO restriction is undone by a completely unrelated field change. That is a genuine correctness gap,
+not an intentional feature — nothing about "disable Apple SSO" and "raise the provider count cap" has any
+business being coupled together, and no plan author would expect touching one to silently repeal the other.
+
+This is corroborated by the fact that **exactly the sections where an independent-override need has
+plausibly come up already have been upgraded to field-level merging** (`oauth.client`, `messaging`,
+`admin_api`, `usage.limits` — see below), while the rest still carry the original one-line
+`if layer.X == nil { return c }; return layer.X` implementation. That pattern — some sections fixed, most
+not — reads as "nobody has hit this bug for these sections *yet*," not "these sections were deliberately
+designed to require restating the whole section." Verdict per section is in the table's merge-behavior
+column; single-field sections (`custom_domain`, `audit_log`, `google_tag_manager`, top-level `rate_limits`,
+`fraud_protection`) are unaffected since there's nothing else in the section to silently clobber.
+
+- **Whole-section replace, real bug risk** (multi-field sections where the sibling fields are independent
+  and plausibly overridden separately): `identity` (4 independent axes: phone login-ID, provider count cap,
+  9× per-provider disable, biometric), `authenticator` (3 independent password-policy gates), `ui`
+  (branding vs. phone-country allowlist — unrelated features), `hook` (blocking vs. non-blocking handler
+  caps), `collaborator` (`maximum`/`soft_maximum`), and especially `test_mode` (5 unrelated toggles: fixed
+  OTP, deterministic link OTP, and per-channel suppression for SMS/email/WhatsApp — see the worked example
+  below).
+- **Whole-section replace, currently moot**: `authentication` — today `AuthenticationFeatureConfig` has
+  exactly one leaf field (`secondary_authenticators.oob_otp_sms.disabled`), so whole-section and field-level
+  replace are identical in effect. This becomes the same class of risk the day a second secondary-authenticator
+  gate is added.
+- **Whole-section replace, no risk (single field, nothing to clobber)**: `custom_domain`, `audit_log`,
+  `google_tag_manager`, top-level `rate_limits`, `fraud_protection`.
 - **Field-level merge** (deep merge, each leaf independently inherited/overridden): `oauth.client`
   (`OAuthClientFeatureConfig.Merge` merges `maximum`/`soft_maximum`/`custom_ui_enabled`/`app2app_enabled`
   independently), `messaging` (`MessagingFeatureConfig.Merge` merges `rate_limits`/`sms_usage`/`email_usage`
@@ -226,24 +271,24 @@ fraud_protection:
 
 | Field | Default | Description | Overlaps with `authgear.yaml`? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `login_id.types.phone.disabled` | `false` | Plan gate: whether the `phone` login ID type can be used at all. | **Yes** — `identity.login_id.keys[]` entries where `type: phone` (`LoginIDKeyConfig` in `identity.go`; there is no `identity.login_id.types.phone` in app config — `LoginIDTypesConfig` only has `email`/`username` sub-objects, phone is configured purely via a `keys[]` entry). Feature flag gates availability; app config's `keys[]` entry configures behavior (max length, create/update/delete disabled, etc.). | **No** — different axis (can it be used at all vs. how it behaves); removing either changes behavior. | **Whole-section replace.** If any layer sets `identity:` at all, its entire `identity` tree (login_id + oauth + biometric together) replaces the lower layer's — not merged field-by-field. Highest layer that mentions `identity` wins outright. |
-| `oauth.maximum_providers` | `99` | Max number of distinct OAuth/SSO provider *types* (google, facebook, etc.) that may be configured. | **Yes** — `identity.oauth.providers[]` (`OAuthSSOConfig.Providers`, `identity.go`) is where providers are actually configured; this is a count cap on that list. | **No** — a count cap over a list isn't the same data as the list itself. | Same whole-`identity`-section replace as above. |
-| `oauth.providers.<name>.disabled` (9 providers) | `false` each | Per-provider plan gate (e.g. disable `apple` SSO on a lower tier). | **Yes** — `identity.oauth.providers[]` entries (`OAuthSSOConfig.Providers`, `identity.go`) with matching `type`/`alias`; this disables a specific provider type regardless of what's configured there. | **No** — plan-tier kill-switch, independent of whatever the tenant configures. | Same whole-`identity`-section replace as above. |
-| `biometric.disabled` | `false` | Plan gate for biometric identity/login. | Partial — biometric-related app config exists per platform client config, not a single toggle. | **No** — no single equivalent field exists to be redundant with. | Same whole-`identity`-section replace as above. |
+| `login_id.types.phone.disabled` | `false` | Plan gate: whether the `phone` login ID type can be used at all. | **Yes** — `identity.login_id.keys[]` entries where `type: phone` (`LoginIDKeyConfig` in `identity.go`; there is no `identity.login_id.types.phone` in app config — `LoginIDTypesConfig` only has `email`/`username` sub-objects, phone is configured purely via a `keys[]` entry). Feature flag gates availability; app config's `keys[]` entry configures behavior (max length, create/update/delete disabled, etc.). | **No** — different axis (can it be used at all vs. how it behaves); removing either changes behavior. | **Trap, not a real need.** Whole-section replace: any layer that sets `identity:` at all replaces the entire tree (login_id + oauth + biometric) rather than merging field-by-field. Concretely: if Plan sets only `oauth.providers.apple.disabled: true`, and a higher layer (App, or a stale App-layer copy of an old plan — see intro) sets only `oauth.maximum_providers: 150`, the merged `identity.oauth.providers` becomes unset entirely and `apple.disabled` **silently reverts to the hardcoded default `false`**, undoing the Plan's SSO restriction. Nothing links "provider count cap" to "which providers are disabled" — this coupling is accidental. |
+| `oauth.maximum_providers` | `99` | Max number of distinct OAuth/SSO provider *types* (google, facebook, etc.) that may be configured. | **Yes** — `identity.oauth.providers[]` (`OAuthSSOConfig.Providers`, `identity.go`) is where providers are actually configured; this is a count cap on that list. | **No** — a count cap over a list isn't the same data as the list itself. | Same trap — same whole-`identity`-section replace as above. |
+| `oauth.providers.<name>.disabled` (9 providers) | `false` each | Per-provider plan gate (e.g. disable `apple` SSO on a lower tier). | **Yes** — `identity.oauth.providers[]` entries (`OAuthSSOConfig.Providers`, `identity.go`) with matching `type`/`alias`; this disables a specific provider type regardless of what's configured there. | **No** — plan-tier kill-switch, independent of whatever the tenant configures. | Same trap — this is the field actually lost in the worked example above. |
+| `biometric.disabled` | `false` | Plan gate for biometric identity/login. | Partial — biometric-related app config exists per platform client config, not a single toggle. | **No** — no single equivalent field exists to be redundant with. | Same trap — same whole-`identity`-section replace as above. |
 
 ### `authentication`
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `secondary_authenticators.oob_otp_sms.disabled` | `false` | Plan gate: whether SMS OTP can be used as a 2FA method. | **Yes** — `authentication.secondary_authenticators` (`AuthenticationConfig.SecondaryAuthenticators`, `authentication.go`) is the array where the tenant lists `oob_otp_sms` as an enabled 2FA option; this is the plan-level ceiling. | **No** — plan ceiling above the tenant's own on/off choice; dropping it would let any tenant self-enable SMS 2FA regardless of plan. | **Whole-section replace** — if any layer sets `authentication:`, its whole tree wins outright over lower layers (no per-field inheritance). |
+| `secondary_authenticators.oob_otp_sms.disabled` | `false` | Plan gate: whether SMS OTP can be used as a 2FA method. | **Yes** — `authentication.secondary_authenticators` (`AuthenticationConfig.SecondaryAuthenticators`, `authentication.go`) is the array where the tenant lists `oob_otp_sms` as an enabled 2FA option; this is the plan-level ceiling. | **No** — plan ceiling above the tenant's own on/off choice; dropping it would let any tenant self-enable SMS 2FA regardless of plan. | **Moot today, latent trap tomorrow.** `AuthenticationFeatureConfig` currently has exactly one leaf field, so whole-section replace and field-level merge produce identical results — there's nothing else in the section to accidentally clobber yet. That changes the day a second secondary-authenticator gate is added; worth fixing proactively rather than waiting for that PR to reintroduce the same bug class as `identity`. |
 
 ### `authenticator`
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `password.policy.minimum_guessable_level.disabled` | `false` | Plan gate for the "minimum guessable level" (zxcvbn strength) password rule. | **Yes** — `authenticator.password.policy.minimum_guessable_level` (`PasswordPolicyConfig.MinimumGuessableLevel`, `authenticator.go`) is the actual threshold int. | **No** — gate vs. value; the value is meaningless if the plan doesn't allow the rule. | **Whole-section replace** — a layer that sets `authenticator:` at all replaces the whole tree (all 3 password-policy sub-gates together), not per-field. |
-| `password.policy.excluded_keywords.disabled` | `false` | Plan gate for the excluded-keywords password rule. | **Yes** — `authenticator.password.policy.excluded_keywords` (`PasswordPolicyConfig.ExcludedKeywords`, `authenticator.go`) is the actual keyword list. | **No** — same pattern as above. | Same whole-`authenticator`-section replace as above. |
-| `password.policy.history.disabled` | `false` | Plan gate for password-history reuse prevention. | **Yes** — `authenticator.password.policy.history_size` / `.history_days` (`PasswordPolicyConfig.HistorySize`/`HistoryDays`, `authenticator.go`) are the actual values. | **No** — same pattern as above. | Same whole-`authenticator`-section replace as above. |
+| `password.policy.minimum_guessable_level.disabled` | `false` | Plan gate for the "minimum guessable level" (zxcvbn strength) password rule. | **Yes** — `authenticator.password.policy.minimum_guessable_level` (`PasswordPolicyConfig.MinimumGuessableLevel`, `authenticator.go`) is the actual threshold int. | **No** — gate vs. value; the value is meaningless if the plan doesn't allow the rule. | **Trap, not a real need.** Whole-section replace: a layer that sets `authenticator:` at all replaces the whole tree (all 3 password-policy gates together). A plan tightening only `history` while a higher layer separately touches only `minimum_guessable_level` would silently re-enable `history` (reverts to code default `false` = not disabled) even though the plan never intended that. The 3 gates are independent policy knobs with no reason to travel together. |
+| `password.policy.excluded_keywords.disabled` | `false` | Plan gate for the excluded-keywords password rule. | **Yes** — `authenticator.password.policy.excluded_keywords` (`PasswordPolicyConfig.ExcludedKeywords`, `authenticator.go`) is the actual keyword list. | **No** — same pattern as above. | Same trap — same whole-`authenticator`-section replace as above. |
+| `password.policy.history.disabled` | `false` | Plan gate for password-history reuse prevention. | **Yes** — `authenticator.password.policy.history_size` / `.history_days` (`PasswordPolicyConfig.HistorySize`/`HistoryDays`, `authenticator.go`) are the actual values. | **No** — same pattern as above. | Same trap — this is the field used in the `minimum_guessable_level` row's example. |
 
 > Note: the schema (`feature_authenticator.go`) only declares these 3 sub-fields. See the appendix — the
 > testdata fixture lists 5 more (`min_length`, `uppercase_required`, `lowercase_required`,
@@ -253,14 +298,14 @@ fraud_protection:
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `white_labeling.disabled` | `false` | Plan gate: whether "Powered by Authgear" branding can be removed. | No direct app config equivalent (this is a pure plan feature). | **No** — nothing to be redundant with. | **Whole-section replace** — a layer that sets `ui:` at all replaces the whole tree (`white_labeling` + `phone_input` together). |
-| `phone_input.allowlist` | unset | Restricts which countries' dialing codes are selectable in phone inputs. | No app config equivalent found. | **No** — nothing to be redundant with. | Same whole-`ui`-section replace as above. |
+| `white_labeling.disabled` | `false` | Plan gate: whether "Powered by Authgear" branding can be removed. | No direct app config equivalent (this is a pure plan feature). | **No** — nothing to be redundant with. | **Trap, not a real need.** Whole-section replace: a layer that sets `ui:` at all replaces the whole tree (`white_labeling` + `phone_input` together). Branding removal and phone-country allowlisting are unrelated features with no reason to be coupled — a higher layer touching one would silently reset the other to its code default. |
+| `phone_input.allowlist` | unset | Restricts which countries' dialing codes are selectable in phone inputs. | No app config equivalent found. | **No** — nothing to be redundant with. | Same trap — same whole-`ui`-section replace as above. |
 
 ### `custom_domain`
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `disabled` | `false` | Plan gate: whether custom domains can be attached to the project. | No — custom domains are managed out-of-band (portal/DNS), not via `authgear.yaml`. | **No**. | **Whole-section replace** (trivial here — the section is a single field). |
+| `disabled` | `false` | Plan gate: whether custom domains can be attached to the project. | No — custom domains are managed out-of-band (portal/DNS), not via `authgear.yaml`. | **No**. | **No risk** — single field, so whole-section and field-level replace are identical; nothing to clobber. |
 
 ### `oauth` (client)
 
@@ -275,26 +320,26 @@ fraud_protection:
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `blocking_handler.maximum` | `99` | Max number of blocking webhook handlers. | **Yes** — `hook.blocking_handlers[]` (`HookConfig.BlockingHandlers`, `hook.go`) is the actual handler list; this is the count cap. | **No** — cap vs. list. | **Whole-section replace** — a layer setting `hook:` at all replaces both `blocking_handler` and `non_blocking_handler` together. |
-| `non_blocking_handler.maximum` | `99` | Max number of non-blocking (event) webhook handlers. | **Yes** — `hook.non_blocking_handlers[]` (`HookConfig.NonBlockingHandlers`, `hook.go`), same relationship. | **No** — cap vs. list. | Same whole-`hook`-section replace as above. |
+| `blocking_handler.maximum` | `99` | Max number of blocking webhook handlers. | **Yes** — `hook.blocking_handlers[]` (`HookConfig.BlockingHandlers`, `hook.go`) is the actual handler list; this is the count cap. | **No** — cap vs. list. | **Trap, not a real need.** Whole-section replace: a layer setting `hook:` at all replaces both `blocking_handler` and `non_blocking_handler` together, even though the two caps are independent. Worse, the fallback isn't neutral — the code default for both is a generous `99`, so a lower layer's tighter cap silently disappearing means a customer could end up with *more* handlers allowed than their plan intended, not fewer. |
+| `non_blocking_handler.maximum` | `99` | Max number of non-blocking (event) webhook handlers. | **Yes** — `hook.non_blocking_handlers[]` (`HookConfig.NonBlockingHandlers`, `hook.go`), same relationship. | **No** — cap vs. list. | Same trap — same whole-`hook`-section replace as above, same over-permissioning risk. |
 
 ### `audit_log`
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `retrieval_days` | `-1` (no limit) | How many days of audit log history are retrievable via API/portal. | No app config equivalent — audit log retention isn't tenant-configurable. | **No**. | **Whole-section replace** (trivial — single field). |
+| `retrieval_days` | `-1` (no limit) | How many days of audit log history are retrievable via API/portal. | No app config equivalent — audit log retention isn't tenant-configurable. | **No**. | **No risk** — single field, so whole-section and field-level replace are identical; nothing to clobber. |
 
 ### `google_tag_manager`
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `disabled` | `false` | Plan gate for the Google Tag Manager integration. | **Yes** — `google_tag_manager.container_id` (`GoogleTagManagerConfig.ContainerID`, `google_tag_manager.go`) is the actual container ID; this gates whether it can be used at all. | **No** — gate vs. the container ID value itself. | **Whole-section replace** (trivial — single field). |
+| `disabled` | `false` | Plan gate for the Google Tag Manager integration. | **Yes** — `google_tag_manager.container_id` (`GoogleTagManagerConfig.ContainerID`, `google_tag_manager.go`) is the actual container ID; this gates whether it can be used at all. | **No** — gate vs. the container ID value itself. | **No risk** — single field, so whole-section and field-level replace are identical; nothing to clobber. |
 
 ### `rate_limits` (top-level)
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `disabled` | `false` | **Global kill-switch**: when `true`, `Limiter.doReserveN` (`pkg/lib/ratelimit/limiter.go:77`) skips *all* rate limiting for the project, regardless of any other rate-limit config. | No single equivalent in app config — app config only has many individual per-endpoint `enabled` flags (e.g. `authentication_rate_limits.go`, `messaging.go`). This is a blanket override above all of them. | **No** — no single field it could be redundant with; it's the master switch above all of them. | **Whole-section replace** (trivial — single field). |
+| `disabled` | `false` | **Global kill-switch**: when `true`, `Limiter.doReserveN` (`pkg/lib/ratelimit/limiter.go:77`) skips *all* rate limiting for the project, regardless of any other rate-limit config. | No single equivalent in app config — app config only has many individual per-endpoint `enabled` flags (e.g. `authentication_rate_limits.go`, `messaging.go`). This is a blanket override above all of them. | **No** — no single field it could be redundant with; it's the master switch above all of them. | **No risk** — single field, so whole-section and field-level replace are identical; nothing to clobber. |
 
 ### `messaging`
 
@@ -318,7 +363,7 @@ fraud_protection:
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `maximum` / `soft_maximum` | unset (nil) | Max number of portal collaborators (admins) on the project. | No — collaborators are managed via the portal/site-admin API, not `authgear.yaml`. | **No**. | **Whole-section replace** — a layer setting `collaborator:` at all replaces both `maximum` and `soft_maximum` together. |
+| `maximum` / `soft_maximum` | unset (nil) | Max number of portal collaborators (admins) on the project. | No — collaborators are managed via the portal/site-admin API, not `authgear.yaml`. | **No**. | **Trap, not a real need.** Whole-section replace: a layer setting `collaborator:` at all replaces both `maximum` and `soft_maximum` together. Since Plan documents are hand-authored partial YAML (confirmed via `cmd/portal/plan/service.go` — see intro), a plan bump to just `maximum` would silently drop any previously-set `soft_maximum` back to unset (no warning threshold at all), not because anyone intended to remove it. |
 
 ### `web3` *(deprecated)*
 
@@ -337,17 +382,17 @@ fraud_protection:
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `fixed_oob_otp.enabled` / `.code` | `false` / `""` | Plan-tier gate + fixed code. When both this **and** the app-level `test_mode.oob_otp.enabled` + a matching rule are true, the fixed `code` is used instead of a random OTP (`pkg/lib/authn/otp/form.go`). | **Yes, layered** — `test_mode.oob_otp.enabled` + `test_mode.oob_otp.rules[].fixed_code` (`TestModeOOBOTPConfig`, `test_mode.go`) decide *which phone/email targets* get a fixed code via regex rules; this feature flag is the plan-level switch that must also be on. Neither alone is sufficient. | **No** — both must be true simultaneously (AND, not OR); dropping either one disables the capability entirely. | **Whole-section replace, and it's a real trap here.** If any layer sets `test_mode:` at all, its entire tree (`fixed_oob_otp` + `deterministic_link_otp` + `sms`/`email`/`whatsapp.suppressed`, all 5) replaces the lower layer's wholesale. E.g. if Plan sets `test_mode.fixed_oob_otp.enabled: true` and App later sets only `test_mode.sms.suppressed: true` without repeating `fixed_oob_otp`, the App layer's `test_mode` wins outright and the Plan's `fixed_oob_otp` setting is silently lost. |
-| `deterministic_link_otp.enabled` | `false` | Plan gate for deterministic (non-random) magic-link OTP generation, same gating pattern as above. | Same layered pattern, jointly with **`test_mode.oob_otp`** (`test_mode.go`) — no separate app-config field of its own. | **No** — same AND-gate reasoning. | Same whole-`test_mode`-section replace and trap as above. |
-| `sms.suppressed` | `false` | **Blanket** plan-tier kill-switch: when `true`, ALL outgoing SMS are suppressed (routed to test-mode delivery), regardless of recipient. Enforced in `pkg/lib/messaging/sender.go` as an independent, unconditional check. | **Yes, but not a duplicate** — `test_mode.sms.enabled` + `test_mode.sms.rules[].suppressed` (`TestModeSMSConfig`, `test_mode.go`) suppress SMS **only for recipients matching a configured regex rule**. The feature flag suppresses **everyone, unconditionally**. Both are checked; either one suppresses (OR, not override). | **No** — they answer different questions ("suppress everyone" vs. "suppress these specific test numbers"). Removing the feature flag would remove the ability to force a trial plan into a fully sandboxed state; removing the app-config rules would remove tenant-defined test-number suppression. Confusing naming, not redundant. | Same whole-`test_mode`-section replace and trap as above. |
-| `email.suppressed` | `false` | Same blanket kill-switch pattern, for email. | **`test_mode.email.enabled` + `.rules[].suppressed`** (`TestModeEmailConfig`, `test_mode.go`) — same layered relationship as `sms.suppressed`. | **No** — same reasoning as `sms.suppressed`. | Same whole-`test_mode`-section replace and trap as above. |
-| `whatsapp.suppressed` | `false` | Same blanket kill-switch pattern, for WhatsApp. | **`test_mode.whatsapp.enabled` + `.rules[].suppressed`** (`TestModeWhatsappConfig`, `test_mode.go`) — same layered relationship as `sms.suppressed`. | **No** — same reasoning as `sms.suppressed`. | Same whole-`test_mode`-section replace and trap as above. |
+| `fixed_oob_otp.enabled` / `.code` | `false` / `""` | Plan-tier gate + fixed code. When both this **and** the app-level `test_mode.oob_otp.enabled` + a matching rule are true, the fixed `code` is used instead of a random OTP (`pkg/lib/authn/otp/form.go`). | **Yes, layered** — `test_mode.oob_otp.enabled` + `test_mode.oob_otp.rules[].fixed_code` (`TestModeOOBOTPConfig`, `test_mode.go`) decide *which phone/email targets* get a fixed code via regex rules; this feature flag is the plan-level switch that must also be on. Neither alone is sufficient. | **No** — both must be true simultaneously (AND, not OR); dropping either one disables the capability entirely. | **Strongest trap in the whole schema, not a real need.** Whole-section replace: any layer that sets `test_mode:` at all replaces the entire tree (`fixed_oob_otp` + `deterministic_link_otp` + `sms`/`email`/`whatsapp.suppressed`, all 5) wholesale. These 5 gates are the least related of any section — a fixed-OTP testing feature and a per-channel blanket suppression switch have no business being coupled. E.g. Plan sets `test_mode.fixed_oob_otp.enabled: true`; a higher layer (a genuine one-off exception, or more likely a stale App-layer copy left over from a plan change — see intro) sets only `test_mode.sms.suppressed: true`. The Plan's `fixed_oob_otp` setting is silently discarded, with no error or warning. |
+| `deterministic_link_otp.enabled` | `false` | Plan gate for deterministic (non-random) magic-link OTP generation, same gating pattern as above. | Same layered pattern, jointly with **`test_mode.oob_otp`** (`test_mode.go`) — no separate app-config field of its own. | **No** — same AND-gate reasoning. | Same trap — same whole-`test_mode`-section replace as above. |
+| `sms.suppressed` | `false` | **Blanket** plan-tier kill-switch: when `true`, ALL outgoing SMS are suppressed (routed to test-mode delivery), regardless of recipient. Enforced in `pkg/lib/messaging/sender.go` as an independent, unconditional check. | **Yes, but not a duplicate** — `test_mode.sms.enabled` + `test_mode.sms.rules[].suppressed` (`TestModeSMSConfig`, `test_mode.go`) suppress SMS **only for recipients matching a configured regex rule**. The feature flag suppresses **everyone, unconditionally**. Both are checked; either one suppresses (OR, not override). | **No** — they answer different questions ("suppress everyone" vs. "suppress these specific test numbers"). Removing the feature flag would remove the ability to force a trial plan into a fully sandboxed state; removing the app-config rules would remove tenant-defined test-number suppression. Confusing naming, not redundant. | Same trap — this is the field used in the worked example above. |
+| `email.suppressed` | `false` | Same blanket kill-switch pattern, for email. | **`test_mode.email.enabled` + `.rules[].suppressed`** (`TestModeEmailConfig`, `test_mode.go`) — same layered relationship as `sms.suppressed`. | **No** — same reasoning as `sms.suppressed`. | Same trap — same whole-`test_mode`-section replace as above. |
+| `whatsapp.suppressed` | `false` | Same blanket kill-switch pattern, for WhatsApp. | **`test_mode.whatsapp.enabled` + `.rules[].suppressed`** (`TestModeWhatsappConfig`, `test_mode.go`) — same layered relationship as `sms.suppressed`. | **No** — same reasoning as `sms.suppressed`. | Same trap — same whole-`test_mode`-section replace as above. |
 
 ### `fraud_protection`
 
 | Field | Default | Description | Overlaps? | Redundant? | Layer merge behavior |
 |---|---|---|---|---|---|
-| `is_modifiable` | `false` | Plan gate: whether the tenant is allowed to modify fraud protection settings themselves (vs. Authgear-managed defaults). | **Yes** — the whole **`fraud_protection`** object (`FraudProtectionConfig`, `fraud_protection.go`: `enabled`, `sms.unverified_otp_budget`, `warnings[]`, `decision`) is the app-config content this gates edit-ability of. | **No** — gate vs. the rules it gates access to. | **Whole-section replace** (trivial here — the section is a single field). |
+| `is_modifiable` | `false` | Plan gate: whether the tenant is allowed to modify fraud protection settings themselves (vs. Authgear-managed defaults). | **Yes** — the whole **`fraud_protection`** object (`FraudProtectionConfig`, `fraud_protection.go`: `enabled`, `sms.unverified_otp_budget`, `warnings[]`, `decision`) is the app-config content this gates edit-ability of. | **No** — gate vs. the rules it gates access to. | **No risk** — single field, so whole-section and field-level replace are identical; nothing to clobber. |
 
 ---
 
