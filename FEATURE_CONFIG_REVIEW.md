@@ -396,6 +396,45 @@ fraud_protection:
 
 ---
 
+## 3. Recommended fixes for the merge traps
+
+Each section below needs its `Merge` method moved from whole-object replace to field-level merge — the
+pattern already implemented correctly in `OAuthClientFeatureConfig.Merge` (`feature_oauth.go`): check each
+leaf field individually and only override it if the higher layer actually set it (`if layer.X != nil {
+merged.X = layer.X }`), instead of `if layer.Y == nil { return c }; return layer.Y`.
+
+### Sections with a confirmed trap (fix these)
+
+| # | File | Type to fix | What's coupled today that shouldn't be |
+|---|---|---|---|
+| 1 | `pkg/lib/config/feature_identity.go` | `IdentityFeatureConfig.Merge` | Most involved fix — needs field-level merge cascaded through 3 nested levels: `LoginID` vs `OAuth` vs `Biometric` at the top, then `OAuth.MaximumProviders` vs `OAuth.Providers`, then each of the 9 providers independently within `Providers`. |
+| 2 | `pkg/lib/config/feature_authenticator.go` | `AuthenticatorFeatureConfig.Merge` (and its nested `PasswordPolicyFeatureConfig`) | `minimum_guessable_level` / `excluded_keywords` / `history` gates, currently all-or-nothing. |
+| 3 | `pkg/lib/config/feature_ui.go` | `UIFeatureConfig.Merge` | `white_labeling` vs `phone_input` — unrelated features. |
+| 4 | `pkg/lib/config/feature_hook.go` | `HookFeatureConfig.Merge` | `blocking_handler.maximum` vs `non_blocking_handler.maximum` — also fixes the over-permissioning risk (silent fallback to `99`). |
+| 5 | `pkg/lib/config/feature_collaborator.go` | `CollaboratorFeatureConfig.Merge` | `maximum` vs `soft_maximum`. |
+| 6 | `pkg/lib/config/feature_test_mode.go` | `TestModeFeatureConfig.Merge` | Highest severity — 5 unrelated gates: `fixed_oob_otp`, `deterministic_link_otp`, `sms.suppressed`, `email.suppressed`, `whatsapp.suppressed`. |
+
+### Worth doing proactively (currently moot, but cheap while in there)
+
+| # | File | Type to fix | Why |
+|---|---|---|---|
+| 7 | `pkg/lib/config/feature_authentication.go` | `AuthenticationFeatureConfig.Merge` | Only one leaf field exists today (`secondary_authenticators.oob_otp_sms.disabled`), so there's nothing to clobber yet — but it'll silently regress into the same bug class the day a second secondary-authenticator gate is added. Fixing now costs little and closes off a predictable future regression. |
+
+### Not worth touching
+
+`custom_domain`, `audit_log`, `google_tag_manager`, top-level `rate_limits`, `fraud_protection` — each is a
+single field, so whole-section and field-level replace are already identical. No change needed.
+
+### Separate issue, different fix (not a trap — a missing implementation)
+
+`pkg/lib/config/feature_web3.go` — `Deprecated_Web3FeatureConfig` has no `Merge` method at all, so
+`web3.nft.maximum` can never be overridden by any layer, full stop. Making it merge-correct would require
+adding a `Merge` method plus the `MergeableFeatureConfig` assertion — but since `web3` is deprecated and
+being phased out, the likely right call is to leave it as-is rather than invest in fixing dead code. Listed
+here only so it isn't confused with items 1–7, which are live, actively-used sections.
+
+---
+
 ## Appendix: stale test fixture data found
 
 While cross-checking `testdata/default_feature.yaml` against the live Go schema, two blocks were found
