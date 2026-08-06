@@ -11,6 +11,16 @@ describe("escapeMessageFormatText", () => {
     expect(escapeMessageFormatText("no quotes")).toEqual("no quotes");
     expect(escapeMessageFormatText("''")).toEqual("''''");
   });
+
+  it("wraps curly braces in single-quote pairs", () => {
+    expect(escapeMessageFormatText("{App}")).toEqual("'{'App'}'");
+    expect(escapeMessageFormatText("{}")).toEqual("'{''}'");
+    expect(escapeMessageFormatText("{0}")).toEqual("'{'0'}'");
+  });
+
+  it("handles combinations of quotes and braces", () => {
+    expect(escapeMessageFormatText("a'{'b")).toEqual("a'''{'''b");
+  });
 });
 
 describe("unescapeMessageFormatText", () => {
@@ -26,5 +36,10 @@ describe("unescapeMessageFormatText", () => {
     test("no quotes");
     test("''");
     test("");
+    test("{App}");
+    test("{}");
+    test("{0}");
+    test("a'{'b");
+    test("~!@#$%^&*()_+=-`[]{}|;':\",./<>?👻");
   });
 });
