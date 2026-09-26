@@ -14,6 +14,7 @@
     + [Allow the user to remove their password](#allow-the-user-to-remove-their-password)
     + [Ensure passkey support for syncing cross-platform authenticator](#ensure-passkey-support-for-syncing-cross-platform-authenticator)
   * [Configuration](#configuration)
+  * [Where a ceremony may run](#where-a-ceremony-may-run)
   * [Implementation Details](#implementation-details)
     + [Credential ID](#credential-id)
     + [PublicKeyCredentialCreationOptions](#publickeycredentialcreationoptions)
@@ -180,6 +181,16 @@ authentication:
 ```
 
 - `authentication.identities` and `authentication.primary_authenticators` : `passkey` is added. They have to be present or absent at the same time. If `passkey` comes before other primary authenticators, the user is prompted to set up a passkey first. If `passkey` is present in `authentication.identities`, then `login_id` MUST also be present.
+
+## Where a ceremony may run
+
+A ceremony is performed by the page the end-user is on, so where that page is hosted decides whether it can happen at all. Two separate rules apply, and both must hold.
+
+**The page must be allowed to claim the Relying Party ID.** The Relying Party ID is the host of `http.public_origin`. A page may only use a Relying Party ID that is its own domain or a registrable domain suffix of it, so AuthUI qualifies, and so does a Custom UI hosted at that host or a subdomain of it. A Custom UI on a sibling domain does not: with Authgear at `auth.example.com`, a page at `ui.auth.example.com` may claim it, and one at `ui-b.example.com` may not. The browser refuses before any request reaches Authgear, so nothing appears in the logs.
+
+**Authgear must accept the origin.** Origins are compared exactly — a suffix relationship is not enough, and a differing port makes a different origin. The public origin is always accepted. A Custom UI's origin is accepted when it is registered as that client's `x_custom_ui_uri`, which is also what allows the Custom UI to call the API at all. An unregistered origin fails after the end-user has completed the ceremony, leaving a credential on their device that was never stored.
+
+Note that this is stricter than the same-site requirement for [`select_account`](./custom-ui-select-account.md): a Custom UI sharing only a registrable domain with Authgear can offer `select_account` but cannot perform a passkey ceremony.
 
 ## Implementation Details
 
