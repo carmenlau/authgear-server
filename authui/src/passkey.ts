@@ -12,6 +12,7 @@ import {
   isFirefoxSecurityKeyError,
   isOperationFailError,
 } from "./passkeyError";
+import { getWebViewBridge } from "./webviewBridge";
 
 function passkeyIsAvailable(): boolean {
   return (
@@ -694,6 +695,14 @@ export class PasskeyAutofillController extends Controller {
 
   start() {
     if (!passkeyIsAvailable()) {
+      return;
+    }
+    // No autofill in the SDK's own WebView, which has the bridge.
+    // On iOS, autofill keeps a passkey request pending for the app, and the OS allows
+    // one passkey request per app at a time, so the request through the bridge would fail.
+    // The pending request was also seen to outlive the WebView and block every later one.
+    // The check is the presence of the bridge, so that autofill does not wait for a reply.
+    if (getWebViewBridge() != null) {
       return;
     }
 
